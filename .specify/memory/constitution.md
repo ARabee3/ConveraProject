@@ -1,50 +1,52 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+Sync Impact Report:
+Version change: N/A → 1.0.0
+List of modified principles:
+- [PRINCIPLE_1_NAME] → I. NestJS Modular & Clean Architecture
+- [PRINCIPLE_2_NAME] → II. MySQL ACID Compliant Persistence
+- [PRINCIPLE_3_NAME] → III. High-Performance Redis Integration
+- [PRINCIPLE_4_NAME] → IV. Global Standardized API & Validation
+- [PRINCIPLE_5_NAME] → V. Security, Containerization & Environment Isolation
+Added sections:
+- Infrastructure & Deployment
+- Development Standards
+Removed sections:
+- None
+Templates requiring updates:
+- .specify/templates/plan-template.md (✅ verified)
+- .specify/templates/spec-template.md (✅ verified)
+- .specify/templates/tasks-template.md (✅ verified)
+- .gemini/commands/*.toml (✅ verified)
+Follow-up TODOs:
+- None
+-->
+
+# Convera Backend Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. NestJS Modular & Clean Architecture
+Feature modules (e.g., AuthModule, BookingModule, ChatModule) are mandatory. Utilize dependency injection, decorators, and strict TypeScript. Maintain strict separation: Controllers handle routing, Services handle business logic, and Repositories handle data access.
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### II. MySQL ACID Compliant Persistence
+MySQL is the primary database for all booking transactions to ensure strict ACID properties and prevent double-booking. Data access must be performed via TypeORM or Prisma.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### III. High-Performance Redis Integration
+Redis is mandatory for caching search queries, managing session states/OTPs, and handling real-time pub/sub messaging for the chat system. Operations must target latency under 1 second.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### IV. Global Standardized API & Validation
+Implement a global exception filter and ensure all API responses follow a unified JSON format for success and error states. Mandatory global use of `class-validator` and `class-transformer` for all DTOs.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### V. Security, Containerization & Environment Isolation
+Enforce Role-Based Access Control (RBAC) globally using NestJS Guards. Sensitive data must never be returned in API payloads. All infrastructure must be containerized with Docker and Docker Compose for Linux (Ubuntu) deployment.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+## Infrastructure & Deployment
+All services must be containerized using Docker. Use Docker Compose for local development and orchestration. The target environment is Linux (Ubuntu).
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
-
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
-
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+## Development Standards
+Strict TypeScript must be used across all modules. Modular design is required to ensure scalability and maintainability. Unified error handling and validation must be enforced at the gateway/controller level.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
+The Constitution supersedes all other development practices. Amendments require a version bump, documentation of rationale, and a migration plan if applicable. All pull requests must verify compliance with these principles.
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
-
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0.0 | **Ratified**: 2026-04-15 | **Last Amended**: 2026-04-15
