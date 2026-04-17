@@ -1,8 +1,11 @@
 import { IsEmail, IsString, Matches, MinLength } from 'class-validator';
 
-export class RegisterDto {
+export class ResetPasswordDto {
   @IsEmail({}, { message: 'email must be an email' })
   email!: string;
+
+  @IsString()
+  code!: string;
 
   @IsString()
   @MinLength(8, { message: 'password must be at least 8 characters' })
