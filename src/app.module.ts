@@ -8,6 +8,8 @@ import * as path from 'path';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
+import { AccommodationModule } from './accommodation/accommodation.module';
+import { ReviewsModule } from './reviews/reviews.module';
 
 @Module({
   imports: [
@@ -15,6 +17,8 @@ import { UsersModule } from './users/users.module';
     PrismaModule,
     AuthModule,
     UsersModule,
+    AccommodationModule,
+    ReviewsModule,
     LoggerModule.forRoot({
       pinoHttp: {
         transport: process.env.NODE_ENV !== 'production' ? { target: 'pino-pretty' } : undefined,
