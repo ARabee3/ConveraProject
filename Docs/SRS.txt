@@ -1,0 +1,391 @@
+2.2 Product Functions
+The Convera system will provide the following main functions:
+• Secure User Authentication using Email/Password and OTP verification.
+• Event Discovery based on location, date, price, and eligibility.
+• Accommodation Search (apartments, hotels, stays) similar to Airbnb interface.
+• Advanced Filtering (price, rating, distance, availability).
+• Property Details Viewing including images, reviews, and amenities.
+• Real-Time Booking System with availability updates.
+• Secure Online Payment integration.
+• Reservation Management (view, modify, cancel bookings).
+• User Profile Management (personal data, booking history).
+• Host-User Chat System for direct communication.
+• Reviews & Ratings System for properties.
+• Automated Email Notifications (booking confirmation, updates).
+• Admin Dashboard for managing users, listings, and events.
+
+2.3 User Characteristics
+User Type
+Customers (Users)
+
+Skills/Technical
+Level
+Basic
+
+Hosts (Property
+Owners)
+Admins
+
+‫متوسط‬
+Advanced
+
+System Admins
+
+Expert
+
+Capabilities in System
+Register, login, search events, book stays,
+chat, pay
+Manage listings, chat with users, handle
+bookings
+Manage users, events, properties, monitor
+system
+Maintain infrastructure, security, integrations
+
+Users interact with intuitive UI similar to modern platforms (e.g., Airbnb).
+
+2.4 Constraints
+• Security: OTP + encrypted passwords required.
+• Real-Time Updates: Prevent double booking.
+• Performance: Must handle high user load.
+• Network Dependency: Requires internet.
+• Scalability: Must support future expansion.
+• Third-party Dependencies: Payment gateways, email services. W integration m3
+
+Tazkarti), tickets marche
+
+(
+
+2.5 Assumptions and Dependencies
+• Users have smartphones or computers.
+• Email services work reliably.
+• Payment gateways are trusted.
+• Hosts provide accurate property info.
+• Event data is available (API or admin input).
+
+3 System Features
+3.1 User Authentication & OTP System
+FR1: Users must be able to sign up using:
+•
+•
+•
+•
+•
+
+Full name
+Email
+Phone number
+ID photo
+Password
+
+FR2: System must enforce strong password rules.
+FR3: OTP verification must be sent to email or phone during:
+•
+•
+
+Registration
+Login (optional 2FA)
+
+FR4: Users must verify OTP before accessing the system.
+FR5: Users can log in and log out securely.
+FR6: “Forgot Password” must allow reset via OTP.
+
+3.2 Homepage & Navigation
+FR7: Homepage must display:
+•
+•
+•
+
+Featured properties
+Popular destinations
+Trending events
+
+FR8: UI must be similar to modern booking platforms (card-based layout).
+
+FR9: Navigation bar must include:
+•
+•
+•
+•
+
+Home
+Events
+Properties
+Profile
+
+FR10: Search bar must be always accessible.
+
+3.3 Event Browsing & Filtering
+FR11: Users can browse nearby events.
+FR12: Users can search events by:
+•
+•
+•
+
+Location
+Date
+Category
+
+FR13: Users can filter events by:
+•
+•
+•
+
+Price
+Date range
+Eligibility (age, ticket type, etc.)
+
+FR14: Event details must include:
+•
+•
+•
+•
+•
+
+Name
+Date
+Price
+Location
+Description
+
+3.4 Property Browsing (Apartments & Hotels)
+FR15: Users can browse properties (like Airbnb).
+FR16: Users can filter properties by:
+•
+•
+
+Price
+Rating
+
+•
+•
+
+Distance
+Availability
+
+FR17: Property cards must show:
+•
+•
+•
+•
+
+Image
+Price
+Location
+Rating
+
+3.5 Property Details & Reviews
+FR18: Users can view full property details:
+•
+•
+•
+•
+
+Images
+Description
+Amenities
+Location
+
+FR19: Users can read reviews from other users.
+FR20: Users can submit ratings and reviews after booking.
+
+3.6 Chat System
+FR21: Users can start chat with property owners. RESTRICTIONS
+FR22: Chat must support real-time messaging.
+FR23: Notifications must be sent for new messages.
+
+3.7 Booking System
+FR24: Users select:
+•
+•
+
+Check-in / Check-out dates
+Number of guests
+
+FR25: System must check availability in real-time.
+FR26: Users confirm booking before payment.
+
+3.8 Payment Processing
+FR27: Users can pay using:
+•
+•
+•
+
+VISA
+MASTERCARD
+Digital wallets
+
+FR28: Payment must be secure (encrypted).
+FR29: System supports full payment or deposit.
+
+3.9 Reservation Management
+FR30: Users can view all bookings.
+FR31: Users can cancel bookings based on policy.
+FR32: Users can modify bookings if available.
+FR33: System updates availability automatically.
+
+3.10 Notifications System
+FR34: Users receive email confirmation after booking.
+FR35: Email includes:
+•
+•
+
+Booking details
+Reference number
+
+FR36: Users receive reminders before event dates.
+FR37: Users receive updates on booking changes.
+
+3.11 User Profile Management
+FR38: Users can view profile info.
+FR39: Users can edit:
+•
+•
+
+Personal data
+Contact info
+
+FR40: Users can view booking history.
+
+3.12 Host Panel
+FR41: Hosts can add properties.
+FR42: Hosts can edit/delete listings.
+FR43: Hosts can manage availability and pricing.
+FR44: Hosts can view bookings.
+
+3.13 Admin Panel
+FR45: Admin manages users.
+FR46: Admin manages events.
+FR47: Admin manages properties.
+FR48: Admin monitors system activity.
+
+4. Non-Functional Requirements (Convera)
+
+4.1 Performance Requirements
+• The system should support at least 1,500 concurrent users without performance degradation.
+• Response time for user actions (search, booking, chat, filtering) should not exceed 500
+milliseconds under normal load.
+• The system should handle up to 15,000 daily transactions (bookings, payments, messages).
+• Search results (events/properties) should load within 2 seconds maximum.
+• Real-time features (chat, availability updates) should have latency ‫أقل من‬1 second.
+
+4.2 Reliability
+• In case of system failure, automatic recovery should occur within 2 minutes.
+• Data must be backed up automatically every 4–6 hours.
+• Booking transactions must be atomic (either fully completed or fully canceled).
+• In case of network failure, pending transactions (payments/bookings) should be queued and
+retried.
+• Message delivery in chat system must be reliable with retry mechanisms.
+
+4.3 Availability
+• The system must maintain 99.9% uptime excluding scheduled maintenance.
+• Critical services (authentication, booking, payment) must always be available.
+• Maintenance periods should be announced in advance.
+
+4.4 Scalability
+• The system should support horizontal scaling (adding servers).
+• The system should support expansion to multiple cities and countries.
+• The system should handle increasing number of:
+•
+•
+•
+
+Users
+Properties
+Events
+
+• The system should support integration with multiple payment gateways depending on region.
+• The system should scale chat services separately (microservices approach).
+
+4.5 Security
+• All data must be encrypted using HTTPS (SSL/TLS) during transmission.
+• Sensitive data (passwords, payments) must be encrypted in the database.
+• OTP verification must be used for:
+•
+•
+•
+
+Registration
+Login (optional 2FA)
+Password recovery
+
+• Role-Based Access Control (RBAC) must be implemented:
+•
+•
+•
+
+Users
+Hosts
+Admins
+
+• All login attempts, bookings, and payments must be logged.
+• Protection against:
+•
+•
+•
+
+SQL Injection
+XSS
+CSRF
+
+• Payment processing must comply with PCI DSS standards.
+
+4.6 Usability
+• The system interface must be simple, modern, and ‫ مشابه لتطبيقات زي‬Airbnb.
+• The system must be responsive (Mobile + Desktop).
+• Navigation must be clear and consistent.
+• Filters and search must be easy to use.
+• Tooltips and guidance should be available for key features.
+• Error messages must be clear and helpful.
+
+4.7 Maintainability
+• The system should follow modular architecture (MVC or microservices).
+• Code must follow clean coding standards and naming conventions.
+• The system should allow updates without downtime (CI/CD support).
+• Logs and monitoring tools must be available for debugging.
+
+4.8 Legal and Compliance
+• The system must comply with:
+•
+•
+•
+
+GDPR (data privacy)
+PCI DSS (payment security)
+Local regulations
+
+• Terms of Service and Privacy Policy must be clearly displayed.
+• Users must accept policies before registration.
+• User data must not be shared without consent.
+
+4.9 Disaster Recovery
+• Full backups must be stored in multiple geographic locations.
+• At least two redundant servers per region must be available.
+• The system should restore full functionality within 2 hours in case of disaster.
+• Failover mechanisms must automatically switch to backup servers.
+
+4.10 Compatibility
+• The system must work on:
+•
+•
+•
+•
+
+Chrome
+Edge
+Firefox
+Mobile browsers
+
+• The system must support different screen sizes.
+
+4.11 Data Integrity
+• All bookings must be consistent and prevent double booking.
+• Database transactions must follow ACID properties.
+• Data validation must be applied on both frontend and backend.
+
+4.12 Notification & Communication
+• Email notifications must be delivered within 1 minute.
+• Chat messages must be delivered in real-time.
+• System must support push notifications (future enhancement).
+
+
