@@ -9,7 +9,7 @@ node_modules
 GEMINI.md
 /specs
 /dist
-
+.agent
 # IDEs and OS files
 .DS_Store
 .vscode/

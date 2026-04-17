@@ -12,6 +12,8 @@ import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import Redis from 'ioredis';
 import { RegisterDto } from './dto/register.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { RefreshDto } from './dto/refresh.dto';
@@ -134,7 +136,7 @@ export class AuthService implements OnModuleDestroy {
   }
 
   private async generateTokens(userId: string, email: string, role: string) {
-    const payload = { sub: userId, email, role };
+    const payload = { sub: userId, email, role, jti: crypto.randomUUID() };
     const accessToken = this.jwtService.sign(payload);
 
     const refreshTokenStr = crypto.randomBytes(40).toString('hex');
@@ -164,5 +166,50 @@ export class AuthService implements OnModuleDestroy {
       },
       message: 'Login successful.',
     };
+  }
+
+  async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
+    const { email } = forgotPasswordDto;
+    const user = await this.usersService.user({ email });
+
+    // For security, always return success even if user doesn't exist
+    if (user) {
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const key = `otp:reset:${email}`;
+      await this.redis.set(key, JSON.stringify({ code: otp, attempts: 0 }), 'EX', 15 * 60);
+
+      console.log(`Mock Email: Reset OTP for ${email} is ${otp}`);
+    }
+
+    return { message: 'If an account exists, a reset code has been sent to your email.' };
+  }
+
+  async resetPassword(resetPasswordDto: ResetPasswordDto) {
+    const { email, code, password } = resetPasswordDto;
+    const key = `otp:reset:${email}`;
+    const dataString = await this.redis.get(key);
+
+    if (!dataString) {
+      throw new BadRequestException('Reset code expired or invalid');
+    }
+
+    const data = JSON.parse(dataString) as { code: string; attempts: number };
+    if (data.code !== code) {
+      data.attempts += 1;
+      await this.redis.set(key, JSON.stringify(data), 'KEEPTTL');
+      throw new BadRequestException('Invalid reset code');
+    }
+
+    await this.redis.del(key);
+
+    const saltRounds = 10;
+    const passwordHash = await bcrypt.hash(password, saltRounds);
+
+    await this.usersService.updateUser({
+      where: { email },
+      data: { passwordHash },
+    });
+
+    return { message: 'Password reset successful.' };
   }
 }
