@@ -9,3 +9,4 @@ node_modules
 GEMINI.md
 /specs
 /dist
+.agent
