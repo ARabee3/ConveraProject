@@ -42,6 +42,7 @@ export function validate(config: Record<string, unknown>) {
     ConfigModule.forRoot({
       isGlobal: true,
       validate,
+      expandVariables: true,
     }),
   ],
 })
