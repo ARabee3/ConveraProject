@@ -32,7 +32,7 @@ describe('AuthController (e2e)', () => {
 
     prismaService = app.get<PrismaService>(PrismaService);
     const configService = app.get<ConfigService>(ConfigService);
-    
+
     const redisUrl = configService.get<string>('REDIS_URL');
     redis = new Redis(redisUrl || 'redis://localhost:6379');
 
@@ -62,7 +62,7 @@ describe('AuthController (e2e)', () => {
         .send({ email: 'bad-email', password: '123' })
         .expect(400)
         .expect((res: request.Response) => {
-          const body = res.body as any;
+          const body = res.body;
           expect(body.error).toBe('Bad Request');
           expect(Array.isArray(body.message)).toBe(true);
           expect(body.statusCode).toBe(400);
@@ -70,10 +70,7 @@ describe('AuthController (e2e)', () => {
     });
 
     it('should register a new user successfully', async () => {
-      const response = await request(httpServer)
-        .post('/auth/register')
-        .send(testUser)
-        .expect(201);
+      const response = await request(httpServer).post('/auth/register').send(testUser).expect(201);
 
       expect(response.body.message).toContain('registered successfully');
     });
@@ -107,14 +104,11 @@ describe('AuthController (e2e)', () => {
     });
 
     it('should login successfully and return tokens', async () => {
-      const response = await request(httpServer)
-        .post('/auth/login')
-        .send(testUser)
-        .expect(200);
+      const response = await request(httpServer).post('/auth/login').send(testUser).expect(200);
 
       expect(response.body.data.accessToken).toBeDefined();
       expect(response.body.data.refreshToken).toBeDefined();
-      
+
       accessToken = response.body.data.accessToken;
       refreshToken = response.body.data.refreshToken;
     });
@@ -128,7 +122,7 @@ describe('AuthController (e2e)', () => {
       expect(response.body.data.accessToken).toBeDefined();
       expect(response.body.data.refreshToken).toBeDefined();
       expect(response.body.data.accessToken).not.toBe(accessToken);
-      
+
       accessToken = response.body.data.accessToken;
       refreshToken = response.body.data.refreshToken;
     });
@@ -175,7 +169,7 @@ describe('AuthController (e2e)', () => {
         .post('/auth/forgot-password')
         .send({ email: testUser.email })
         .expect(200);
-      
+
       expect(response.body.message).toContain('reset code has been sent');
     });
 

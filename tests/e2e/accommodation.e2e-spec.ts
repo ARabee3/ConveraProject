@@ -12,9 +12,7 @@ describe('Accommodation Domain (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(
-      new ValidationPipe({ whitelist: true, transform: true }),
-    );
+    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
     await app.init();
   });
 
@@ -33,17 +31,13 @@ describe('Accommodation Domain (e2e)', () => {
     });
 
     it('should accept price filter query params', () => {
-      return request(app.getHttpServer())
-        .get('/properties?priceMin=50&priceMax=200')
-        .expect(200);
+      return request(app.getHttpServer()).get('/properties?priceMin=50&priceMax=200').expect(200);
     });
   });
 
   describe('GET /properties/:id', () => {
     it('should return 404 for a non-existent property', () => {
-      return request(app.getHttpServer())
-        .get('/properties/non-existent-id')
-        .expect(404);
+      return request(app.getHttpServer()).get('/properties/non-existent-id').expect(404);
     });
   });
 

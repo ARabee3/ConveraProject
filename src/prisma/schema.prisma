@@ -117,7 +117,102 @@ model AvailabilityOverride {
   @@map("availability_overrides")
 }
 
-// ─── Versioned Base Entity (used by locking tests) ───────────────────────────
+// ─── Event Domain ─────────────────────────────────────────────────────────────
+
+enum EventStatus {
+  ACTIVE
+  CANCELLED
+}
+
+model Event {
+  id             String           @id @default(uuid())
+  title          String
+  description    String           @db.Text
+  date           DateTime
+  locationLat    Float
+  locationLng    Float
+  address        String
+  price          Decimal          @db.Decimal(10, 2)
+  categoryId     String
+  status         EventStatus      @default(ACTIVE)
+  maxCapacity    Int
+  remainingSpots Int
+  coverImage     String
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  category       EventCategory    @relation(fields: [categoryId], references: [id])
+  eligibility    EventEligibility?
+  source         EventSource?
+  galleryImages  EventGalleryImage[]
+
+  @@index([categoryId])
+  @@index([date])
+  @@index([locationLat, locationLng])
+  @@index([status])
+  @@map("events")
+}
+
+model EventCategory {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  events Event[]
+
+  @@map("event_categories")
+}
+
+model EventEligibility {
+  id                  String   @id @default(uuid())
+  eventId             String   @unique
+  minAge               Int?
+  ticketTypes          Json
+  specialRequirements String?  @db.Text
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@map("event_eligibilities")
+}
+
+enum EventSourceType {
+  EXTERNAL
+}
+
+model EventSource {
+  id                  String        @id @default(uuid())
+  eventId             String        @unique
+  sourceType          EventSourceType @default(EXTERNAL)
+  externalProviderName String
+  externalEventId     String
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([externalProviderName, externalEventId])
+  @@map("event_sources")
+}
+
+model EventGalleryImage {
+  id           String   @id @default(uuid())
+  eventId      String
+  imageUrl     String
+  displayOrder Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+  @@map("event_gallery_images")
+}
+
+// ─── Versioned Base Entity (used by locking tests) ────────────────────────────
 
 model BaseEntity {
   id        String   @id @default(uuid())
