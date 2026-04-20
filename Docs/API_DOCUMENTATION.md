@@ -1,6 +1,6 @@
 # Convera API Documentation (Unified)
 
-This document provides a comprehensive guide to the Convera API endpoints implemented across **Infrastructure**, **Security**, and **Accommodation** domains.
+This document provides a comprehensive guide to the Convera API endpoints implemented across **Infrastructure**, **Security**, **Accommodation**, and **Events** domains.
 
 **Base URL**: `http://localhost:3000`
 
@@ -206,6 +206,135 @@ Returns full details including amenities and reviews.
   "comment": "Amazing stay!"
 }
 ```
+
+---
+
+## 🎪 Events Domain (Spec 4)
+
+Endpoints for event discovery, search, and external provider import management.
+
+### 1. Search Events (Public)
+`GET /events`
+
+**Query Parameters**:
+| Param | Type | Description |
+|-------|------|-------------|
+| `cursor` | string (UUID) | Pagination cursor from previous response |
+| `limit` | number | Results per page (default: 20, max: 100) |
+| `lat` | number | Latitude for geospatial search |
+| `lng` | number | Longitude for geospatial search |
+| `radius` | number | Search radius in km |
+| `date` | ISO date | Filter events on or after date (e.g., `2026-05-01`) |
+| `categoryId` | UUID | Filter by category |
+| `priceMin` | number | Minimum price filter |
+| `priceMax` | number | Maximum price filter |
+| `minAge` | number | Minimum age restriction filter |
+| `ticketTypes` | string[] | Filter by ticket types (e.g., `General,VIP`) |
+
+**Response**:
+```json
+{
+  "events": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "title": "Summer Music Festival",
+      "date": "2026-06-15T20:00:00Z",
+      "address": "123 Concert Ave, Cairo",
+      "price": 150.00,
+      "coverImage": "https://cdn.example.com/events/cover.jpg",
+      "category": {
+        "id": "550e8400-e29b-41d4-a716-446655440001",
+        "name": "Concert"
+      },
+      "remainingSpots": 500,
+      "isSoldOut": false
+    }
+  ],
+  "nextCursor": "550e8400-e29b-41d4-a716-446655440002"
+}
+```
+
+**Notes**:
+- Events are automatically filtered to show only `ACTIVE` events with future dates
+- Results are sorted by date ascending
+- `isSoldOut` is derived from `remainingSpots <= 0`
+
+### 2. Event Details (Public)
+`GET /events/:id`
+
+Returns full event details including gallery images, eligibility restrictions, and source information.
+
+**Response**:
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "title": "Summer Music Festival",
+  "description": "The biggest music event of the summer...",
+  "date": "2026-06-15T20:00:00Z",
+  "address": "123 Concert Ave, Cairo",
+  "price": 150.00,
+  "coverImage": "https://cdn.example.com/events/cover.jpg",
+  "category": {
+    "id": "550e8400-e29b-41d4-a716-446655440001",
+    "name": "Concert"
+  },
+  "remainingSpots": 500,
+  "isSoldOut": false,
+  "locationLat": 30.0444,
+  "locationLng": 31.2357,
+  "status": "ACTIVE",
+  "maxCapacity": 1000,
+  "galleryImages": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440003",
+      "imageUrl": "https://cdn.example.com/events/gallery1.jpg",
+      "displayOrder": 0
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440004",
+      "imageUrl": "https://cdn.example.com/events/gallery2.jpg",
+      "displayOrder": 1
+    }
+  ],
+  "eligibility": {
+    "minAge": 18,
+    "ticketTypes": ["General", "VIP", "VVIP"],
+    "specialRequirements": "Valid ID required for entry"
+  },
+  "source": {
+    "sourceType": "EXTERNAL",
+    "externalProviderName": "Tazkarti",
+    "externalEventId": "tazkarti-event-12345"
+  }
+}
+```
+
+**Notes**:
+- `galleryImages` limited to max 5 images, ordered by `displayOrder`
+- `eligibility` is optional (may be null for events without restrictions)
+- `source` indicates if event was imported from external provider
+
+### 3. Admin: Trigger Event Import
+`POST /admin/events/import`
+
+**Auth Required**: `Bearer Token` (Admin or System Admin role)
+
+Triggers manual synchronization of events from configured external providers (e.g., Tazkarti).
+
+**Response**:
+```json
+{
+  "success": true,
+  "imported": 25,
+  "updated": 10
+}
+```
+
+**Notes**:
+- Imports events from all registered provider adapters
+- Uses upsert logic: existing events (matched by `externalProviderName + externalEventId`) are updated, new events are created
+- Automatically fetches and uploads event images to cloud storage
+- Clears event cache after import to ensure fresh data
 
 ---
 

@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Convera API",
-    "description": "Comprehensive API documentation for Convera - Infrastructure, Security, and Accommodation domains.",
+    "description": "Comprehensive API documentation for Convera - Infrastructure, Security, Accommodation, and Events domains.",
     "version": "1.0.0"
   },
   "servers": [
@@ -26,6 +26,75 @@
           "statusCode": { "type": "integer" },
           "message": { "type": "string" },
           "error": { "type": "string" }
+        }
+      },
+      "EventSearchResult": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "title": { "type": "string" },
+          "date": { "type": "string", "format": "date-time" },
+          "address": { "type": "string" },
+          "price": { "type": "number" },
+          "coverImage": { "type": "string" },
+          "category": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "name": { "type": "string" }
+            }
+          },
+          "remainingSpots": { "type": "integer" },
+          "isSoldOut": { "type": "boolean" }
+        }
+      },
+      "EventDetailResult": {
+        "allOf": [
+          { "$ref": "#/components/schemas/EventSearchResult" },
+          {
+            "type": "object",
+            "properties": {
+              "description": { "type": "string" },
+              "locationLat": { "type": "number" },
+              "locationLng": { "type": "number" },
+              "status": { "type": "string", "enum": ["ACTIVE", "CANCELLED"] },
+              "maxCapacity": { "type": "integer" },
+              "galleryImages": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string" },
+                    "imageUrl": { "type": "string" },
+                    "displayOrder": { "type": "integer" }
+                  }
+                }
+              },
+              "eligibility": {
+                "type": "object",
+                "properties": {
+                  "minAge": { "type": "integer" },
+                  "ticketTypes": { "type": "array", "items": { "type": "string" } },
+                  "specialRequirements": { "type": "string" }
+                }
+              },
+              "source": {
+                "type": "object",
+                "properties": {
+                  "sourceType": { "type": "string" },
+                  "externalProviderName": { "type": "string" },
+                  "externalEventId": { "type": "string" }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "EventSearchResponse": {
+        "type": "object",
+        "properties": {
+          "events": { "type": "array", "items": { "$ref": "#/components/schemas/EventSearchResult" } },
+          "nextCursor": { "type": "string", "nullable": true }
         }
       }
     }
@@ -357,6 +426,124 @@
         },
         "responses": {
           "201": { "description": "Review submitted" }
+        }
+      }
+    },
+    "/events": {
+      "get": {
+        "tags": ["Events"],
+        "summary": "Search Events (Public)",
+        "description": "Search and browse events with cursor-based pagination. Automatically filters to active events with future dates.",
+        "parameters": [
+          { "name": "cursor", "in": "query", "schema": { "type": "string" }, "description": "Pagination cursor from previous response" },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 20 }, "description": "Results per page" },
+          { "name": "lat", "in": "query", "schema": { "type": "number" }, "description": "Latitude for geospatial search" },
+          { "name": "lng", "in": "query", "schema": { "type": "number" }, "description": "Longitude for geospatial search" },
+          { "name": "radius", "in": "query", "schema": { "type": "number" }, "description": "Search radius in km" },
+          { "name": "date", "in": "query", "schema": { "type": "string", "format": "date" }, "description": "Filter events on or after date" },
+          { "name": "categoryId", "in": "query", "schema": { "type": "string", "format": "uuid" }, "description": "Filter by category UUID" },
+          { "name": "priceMin", "in": "query", "schema": { "type": "number" }, "description": "Minimum price filter" },
+          { "name": "priceMax", "in": "query", "schema": { "type": "number" }, "description": "Maximum price filter" },
+          { "name": "minAge", "in": "query", "schema": { "type": "integer" }, "description": "Minimum age restriction filter" },
+          { "name": "ticketTypes", "in": "query", "schema": { "type": "array", "items": { "type": "string" } }, "description": "Filter by ticket types" }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of events with pagination",
+            "content": {
+              "application/json": {
+                "example": {
+                  "events": [
+                    {
+                      "id": "550e8400-e29b-41d4-a716-446655440000",
+                      "title": "Summer Music Festival",
+                      "date": "2026-06-15T20:00:00Z",
+                      "address": "123 Concert Ave, Cairo",
+                      "price": 150.00,
+                      "coverImage": "https://cdn.example.com/events/cover.jpg",
+                      "category": { "id": "550e8400-e29b-41d4-a716-446655440001", "name": "Concert" },
+                      "remainingSpots": 500,
+                      "isSoldOut": false
+                    }
+                  ],
+                  "nextCursor": "550e8400-e29b-41d4-a716-446655440002"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/events/{id}": {
+      "get": {
+        "tags": ["Events"],
+        "summary": "Event Details (Public)",
+        "description": "Get full event details including gallery images, eligibility restrictions, and source information.",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" }, "description": "Event UUID" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Full event details",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "550e8400-e29b-41d4-a716-446655440000",
+                  "title": "Summer Music Festival",
+                  "description": "The biggest music event of the summer...",
+                  "date": "2026-06-15T20:00:00Z",
+                  "address": "123 Concert Ave, Cairo",
+                  "price": 150.00,
+                  "coverImage": "https://cdn.example.com/events/cover.jpg",
+                  "category": { "id": "550e8400-e29b-41d4-a716-446655440001", "name": "Concert" },
+                  "remainingSpots": 500,
+                  "isSoldOut": false,
+                  "locationLat": 30.0444,
+                  "locationLng": 31.2357,
+                  "status": "ACTIVE",
+                  "maxCapacity": 1000,
+                  "galleryImages": [
+                    { "id": "550e8400-e29b-41d4-a716-446655440003", "imageUrl": "https://cdn.example.com/events/gallery1.jpg", "displayOrder": 0 }
+                  ],
+                  "eligibility": {
+                    "minAge": 18,
+                    "ticketTypes": ["General", "VIP", "VVIP"],
+                    "specialRequirements": "Valid ID required for entry"
+                  },
+                  "source": {
+                    "sourceType": "EXTERNAL",
+                    "externalProviderName": "Tazkarti",
+                    "externalEventId": "tazkarti-event-12345"
+                  }
+                }
+              }
+            }
+          },
+          "404": { "description": "Event not found" }
+        }
+      }
+    },
+    "/admin/events/import": {
+      "post": {
+        "tags": ["Admin", "Events"],
+        "summary": "Admin: Trigger Event Import",
+        "description": "Triggers manual synchronization of events from configured external providers. Uses upsert logic - existing events are updated, new events are created.",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Import completed",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "imported": 25,
+                  "updated": 10
+                }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Forbidden - Admin role required" }
         }
       }
     }
