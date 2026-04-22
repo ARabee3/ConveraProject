@@ -26,6 +26,7 @@ model User {
   refreshTokens RefreshToken[]
   properties    Property[]
   reviews       Review[]
+  bookings      Booking[]
 
   @@index([email])
   @@map("users")
@@ -77,6 +78,7 @@ model Property {
   host                  User                   @relation(fields: [hostId], references: [id], onDelete: Cascade)
   reviews               Review[]
   availabilityOverrides AvailabilityOverride[]
+  bookings              Booking[]
 
   @@index([hostId])
   @@index([isActive])
@@ -95,6 +97,7 @@ model Review {
 
   property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  booking    Booking? @relation(fields: [bookingId], references: [id])
 
   @@unique([userId, propertyId, bookingId])
   @@index([propertyId])
@@ -210,6 +213,67 @@ model EventGalleryImage {
 
   @@index([eventId])
   @@map("event_gallery_images")
+}
+
+// ─── Booking & Financial Engine ───────────────────────────────────────────────
+
+enum BookingStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum TransactionStatus {
+  INITIATED
+  SUCCESS
+  FAILED
+}
+
+enum PaymentProvider {
+  STRIPE
+  PAYMOB
+}
+
+model Booking {
+  id         String        @id @default(uuid())
+  propertyId String
+  customerId String
+  startDate  DateTime
+  endDate    DateTime
+  totalPrice Decimal       @db.Decimal(10, 2)
+  status     BookingStatus @default(PENDING_PAYMENT)
+  version    Int           @default(1)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  property     Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  customer     User          @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  review       Review?
+
+  @@index([propertyId])
+  @@index([customerId])
+  @@index([status])
+  @@index([startDate, endDate])
+  @@map("bookings")
+}
+
+model Transaction {
+  id          String          @id @default(uuid())
+  bookingId   String
+  amount      Decimal         @db.Decimal(10, 2)
+  currency    String          @default("EGP")
+  provider    PaymentProvider
+  providerRef String?
+  status      TransactionStatus @default(INITIATED)
+  createdAt   DateTime        @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+  @@index([provider])
+  @@map("transactions")
 }
 
 // ─── Versioned Base Entity (used by locking tests) ────────────────────────────

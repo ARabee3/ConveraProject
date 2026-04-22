@@ -1,6 +1,6 @@
 # Convera API Documentation (Unified)
 
-This document provides a comprehensive guide to the Convera API endpoints implemented across **Infrastructure**, **Security**, **Accommodation**, and **Events** domains.
+This document provides a comprehensive guide to the Convera API endpoints implemented across **Infrastructure**, **Security**, **Accommodation**, **Events**, and **Booking & Payment** domains.
 
 **Base URL**: `http://localhost:3000`
 
@@ -335,6 +335,108 @@ Triggers manual synchronization of events from configured external providers (e.
 - Uses upsert logic: existing events (matched by `externalProviderName + externalEventId`) are updated, new events are created
 - Automatically fetches and uploads event images to cloud storage
 - Clears event cache after import to ensure fresh data
+
+---
+
+## 🏨 Booking & Payment Domain (Spec 6)
+
+Endpoints for property reservations, payment processing, and transaction management.
+
+### 1. Create Booking (Customer)
+`POST /bookings`
+
+**Auth Required**: `Bearer Token` (Customer role)
+**Body**:
+```json
+{
+  "propertyId": "uuid-here",
+  "startDate": "2026-05-01",
+  "endDate": "2026-05-05"
+}
+```
+
+**Response**:
+```json
+{
+  "id": "uuid-here",
+  "propertyId": "uuid-here",
+  "customerId": "uuid-here",
+  "startDate": "2026-05-01T00:00:00.000Z",
+  "endDate": "2026-05-05T00:00:00.000Z",
+  "totalPrice": 400.00,
+  "status": "PENDING_PAYMENT",
+  "version": 1,
+  "createdAt": "2026-04-22T00:00:00.000Z",
+  "updatedAt": "2026-04-22T00:00:00.000Z"
+}
+```
+
+**Notes**:
+- Booking is created with `PENDING_PAYMENT` status and a 15-minute expiration timer
+- Total price is calculated automatically from property basePrice and any price overrides
+- Returns `409 Conflict` if dates overlap with an existing pending or confirmed booking
+- Returns `400 Bad Request` if endDate is not after startDate
+
+### 2. Initialize Payment
+`POST /payments/initialize`
+
+**Auth Required**: `Bearer Token` (Customer role)
+**Body**:
+```json
+{
+  "bookingId": "uuid-here",
+  "provider": "STRIPE"
+}
+```
+
+**Response**:
+```json
+{
+  "transactionId": "uuid-here",
+  "providerRef": "pi_test_123",
+  "paymentUrl": "https://test.com/pay"
+}
+```
+
+**Notes**:
+- Supported providers: `STRIPE`, `PAYMOB`
+- All transactions are processed in `EGP`
+- Returns `400` if booking is not in `PENDING_PAYMENT` status
+
+### 3. Stripe Webhook
+`POST /payments/webhooks/stripe`
+
+**Headers**:
+- `stripe-signature`: Webhook signature from Stripe
+
+**Body**: Stripe event payload
+
+**Response**:
+```json
+{ "received": true }
+```
+
+**Notes**:
+- Automatically confirms booking on `payment_intent.succeeded`
+- Automatically cancels booking on failed payment events
+- Verifies webhook signature using `STRIPE_WEBHOOK_SECRET`
+
+### 4. Paymob Webhook
+`POST /payments/webhooks/paymob`
+
+**Headers**:
+- `hmac`: HMAC signature from Paymob
+
+**Body**: Paymob callback payload
+
+**Response**:
+```json
+{ "received": true }
+```
+
+**Notes**:
+- Verifies webhook signature using HMAC-SHA512 with `PAYMOB_HMAC_SECRET`
+- Automatically confirms or cancels bookings based on payment result
 
 ---
 

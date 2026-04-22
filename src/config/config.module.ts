@@ -21,6 +21,21 @@ class EnvironmentVariables {
 
   @IsString()
   REDIS_URL: string;
+
+  @IsString()
+  STRIPE_SECRET_KEY: string;
+
+  @IsString()
+  STRIPE_WEBHOOK_SECRET: string;
+
+  @IsString()
+  PAYMOB_API_KEY: string;
+
+  @IsString()
+  PAYMOB_HMAC_SECRET: string;
+
+  @IsNumber()
+  RESERVATION_TTL_MINUTES: number;
 }
 
 export function validate(config: Record<string, unknown>) {

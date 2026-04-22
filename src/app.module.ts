@@ -11,6 +11,11 @@ import { UsersModule } from './users/users.module';
 import { AccommodationModule } from './accommodation/accommodation.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { EventsModule } from './events/events.module';
+import { BookingModule } from './booking/booking.module';
+import { PaymentModule } from './payment/payment.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { BullModule } from '@nestjs/bullmq';
+import { ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
@@ -21,6 +26,20 @@ import { EventsModule } from './events/events.module';
     AccommodationModule,
     ReviewsModule,
     EventsModule,
+    BookingModule,
+    PaymentModule,
+    EventEmitterModule.forRoot(),
+    BullModule.forRootAsync({
+      imports: [AppConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        connection: {
+          host: configService.get<string>('REDIS_HOST'),
+          port: configService.get<number>('REDIS_PORT'),
+          password: configService.get<string>('REDIS_PASSWORD'),
+        },
+      }),
+      inject: [ConfigService],
+    }),
     LoggerModule.forRoot({
       pinoHttp: {
         transport: process.env.NODE_ENV !== 'production' ? { target: 'pino-pretty' } : undefined,
