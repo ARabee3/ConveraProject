@@ -30,15 +30,11 @@ export class StripeAdapter implements PaymentAdapter {
 
     return {
       providerRef: paymentIntent.id,
-      paymentUrl: paymentIntent.client_secret!,
+      paymentUrl: paymentIntent.client_secret || '',
     };
   }
 
-  verifyWebhookSignature(
-    payload: Buffer | string,
-    signature: string,
-    secret: string,
-  ): boolean {
+  verifyWebhookSignature(payload: Buffer | string, signature: string, secret: string): boolean {
     try {
       this.stripe.webhooks.constructEvent(payload as Buffer, signature, secret);
       return true;

@@ -47,9 +47,7 @@ export class BookingService {
     // Check for blocked dates
     const blocked = property.availabilityOverrides.some(
       (ao) =>
-        ao.status === 'BLOCKED' &&
-        new Date(ao.startDate) < end &&
-        new Date(ao.endDate) > start,
+        ao.status === 'BLOCKED' && new Date(ao.startDate) < end && new Date(ao.endDate) > start,
     );
 
     if (blocked) {
@@ -203,10 +201,7 @@ export class BookingService {
       data: { status: BookingStatus.CANCELLED },
     });
 
-    this.eventEmitter.emit(
-      'booking.cancelled',
-      new BookingCancelledEvent(bookingId, reason),
-    );
+    this.eventEmitter.emit('booking.cancelled', new BookingCancelledEvent(bookingId, reason));
 
     return this.prisma.booking.findUnique({ where: { id: bookingId } });
   }
@@ -215,7 +210,12 @@ export class BookingService {
 
   private calculateTotalPrice(
     basePrice: number,
-    overrides: Array<{ startDate: Date; endDate: Date; status: string; overridePrice: number | null }>,
+    overrides: Array<{
+      startDate: Date;
+      endDate: Date;
+      status: string;
+      overridePrice: number | null;
+    }>,
     start: Date,
     end: Date,
   ): number {
@@ -231,9 +231,7 @@ export class BookingService {
           new Date(ao.startDate) <= currentDate &&
           new Date(ao.endDate) > currentDate,
       );
-      total += override && override.overridePrice !== null
-        ? Number(override.overridePrice)
-        : Number(basePrice);
+      total += override && override.overridePrice !== null ? override.overridePrice : basePrice;
     }
 
     return total;

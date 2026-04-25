@@ -2,9 +2,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../../src/app.module';
+import { Server } from 'http';
 
 describe('Accommodation Domain (e2e)', () => {
   let app: INestApplication;
+  let httpServer: Server;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -14,6 +16,7 @@ describe('Accommodation Domain (e2e)', () => {
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
     await app.init();
+    httpServer = app.getHttpServer() as Server;
   });
 
   afterAll(async () => {
@@ -22,7 +25,7 @@ describe('Accommodation Domain (e2e)', () => {
 
   describe('GET /properties', () => {
     it('should return an array of active properties', () => {
-      return request(app.getHttpServer())
+      return request(httpServer)
         .get('/properties')
         .expect(200)
         .expect((res: request.Response) => {
@@ -31,19 +34,19 @@ describe('Accommodation Domain (e2e)', () => {
     });
 
     it('should accept price filter query params', () => {
-      return request(app.getHttpServer()).get('/properties?priceMin=50&priceMax=200').expect(200);
+      return request(httpServer).get('/properties?priceMin=50&priceMax=200').expect(200);
     });
   });
 
   describe('GET /properties/:id', () => {
     it('should return 404 for a non-existent property', () => {
-      return request(app.getHttpServer()).get('/properties/non-existent-id').expect(404);
+      return request(httpServer).get('/properties/non-existent-id').expect(404);
     });
   });
 
   describe('POST /host/properties (requires Host JWT)', () => {
     it('should return 401 when no token is provided', () => {
-      return request(app.getHttpServer())
+      return request(httpServer)
         .post('/host/properties')
         .send({
           title: 'Test Property',
@@ -62,7 +65,7 @@ describe('Accommodation Domain (e2e)', () => {
 
   describe('POST /properties/:propertyId/reviews (requires Customer JWT)', () => {
     it('should return 401 when no token is provided', () => {
-      return request(app.getHttpServer())
+      return request(httpServer)
         .post('/properties/some-property-id/reviews')
         .send({ bookingId: '00000000-0000-0000-0000-000000000001', rating: 5 })
         .expect(401);

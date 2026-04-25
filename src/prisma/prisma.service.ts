@@ -12,14 +12,14 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       query: {
         $allModels: {
           async update({ args, query }) {
-            const data = args.data as any;
+            const data = args.data as Record<string, unknown>;
             if (data.version !== undefined) {
               data.version = { increment: 1 };
             }
             return query(args);
           },
           async updateMany({ args, query }) {
-            const data = args.data as any;
+            const data = args.data as Record<string, unknown>;
             if (data.version !== undefined) {
               data.version = { increment: 1 };
             }

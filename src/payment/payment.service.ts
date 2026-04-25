@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { StripeAdapter } from './adapters/stripe.adapter';
 import { PaymobAdapter } from './adapters/paymob.adapter';
@@ -30,11 +26,7 @@ export class PaymentService {
     }
 
     const adapter = this.getAdapter(provider);
-    const result = await adapter.initializePayment(
-      bookingId,
-      Number(booking.totalPrice),
-      'EGP',
-    );
+    const result = await adapter.initializePayment(bookingId, Number(booking.totalPrice), 'EGP');
 
     // Log transaction
     const transaction = await this.prisma.transaction.create({
@@ -64,7 +56,7 @@ export class PaymentService {
     const adapter = this.getAdapter(provider);
     const secret = this.getWebhookSecret(provider);
 
-    const isValid = await adapter.verifyWebhookSignature(
+    const isValid = adapter.verifyWebhookSignature(
       rawBody || JSON.stringify(payload),
       signature,
       secret,

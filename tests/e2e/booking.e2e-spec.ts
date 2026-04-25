@@ -6,6 +6,7 @@ import { PrismaService } from '../../src/prisma/prisma.service';
 import { AllExceptionsFilter } from '../../src/common/filters/http-exception.filter';
 import { Server } from 'http';
 import { BookingStatus } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 
 describe('BookingController (e2e)', () => {
   let app: INestApplication;
@@ -13,7 +14,6 @@ describe('BookingController (e2e)', () => {
   let httpServer: Server;
   let accessToken: string;
   let propertyId: string;
-  let customerId: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -37,15 +37,15 @@ describe('BookingController (e2e)', () => {
     httpServer = app.getHttpServer() as Server;
 
     // Create a test user
+    const hashedPassword = await bcrypt.hash('Password123!', 10);
     const user = await prismaService.user.create({
       data: {
         email: 'booking-test@example.com',
-        passwordHash: '$2b$10$abcdefghijklmnopqrstuvwx1234567890123456789012345678901234',
+        passwordHash: hashedPassword,
         role: 'CUSTOMER',
         isVerified: true,
       },
     });
-    customerId = user.id;
 
     // Create a test property
     const property = await prismaService.property.create({
@@ -69,23 +69,18 @@ describe('BookingController (e2e)', () => {
     // Note: In a real scenario we'd use the auth service, but for simplicity we rely on the auth module
     // For these tests, we'll create a custom JWT or mock the guard if needed
     // Since we need a valid token, let's use the auth controller directly
-    const authResponse = await request(httpServer).post('/auth/register').send({
-      email: 'booking-e2e-test@example.com',
-      password: 'Password123!',
-    });
-
     // Verify the user via DB since we can't get OTP easily in e2e
     await prismaService.user.update({
-      where: { email: 'booking-e2e-test@example.com' },
+      where: { email: 'booking-test@example.com' },
       data: { isVerified: true },
     });
 
     const loginResponse = await request(httpServer).post('/auth/login').send({
-      email: 'booking-e2e-test@example.com',
+      email: 'booking-test@example.com',
       password: 'Password123!',
     });
 
-    accessToken = loginResponse.body.data.accessToken;
+    accessToken = (loginResponse.body as { data: { accessToken: string } }).data.accessToken;
   });
 
   afterAll(async () => {
@@ -108,9 +103,14 @@ describe('BookingController (e2e)', () => {
         })
         .expect(201);
 
-      expect(response.body.status).toBe(BookingStatus.PENDING_PAYMENT);
-      expect(response.body.totalPrice).toBeDefined();
-      expect(response.body.propertyId).toBe(propertyId);
+      const body = response.body as {
+        status: BookingStatus;
+        totalPrice: number;
+        propertyId: string;
+      };
+      expect(body.status).toBe(BookingStatus.PENDING_PAYMENT);
+      expect(body.totalPrice).toBeDefined();
+      expect(body.propertyId).toBe(propertyId);
     });
 
     it('should return 409 for overlapping bookings', async () => {

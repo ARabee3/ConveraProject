@@ -16,12 +16,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse() as Record<string, unknown> | string;
 
-      if (typeof exceptionResponse === 'object' && exceptionResponse) {
+      if (typeof exceptionResponse === 'object') {
         message = (exceptionResponse.message as string | string[]) || exception.message;
-        errorStr = (exceptionResponse.error as string) || String(HttpStatus[status]);
+        errorStr = (exceptionResponse.error as string) || HttpStatus[status];
       } else {
         message = exceptionResponse || exception.message;
-        errorStr = String(HttpStatus[status]);
+        errorStr = HttpStatus[status];
       }
     } else if (exception instanceof Prisma.PrismaClientKnownRequestError) {
       if (exception.code === 'P2002') {

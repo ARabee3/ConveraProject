@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/unbound-method, @typescript-eslint/no-invalid-void-type */
 import { Test, TestingModule } from '@nestjs/testing';
 import { BookingService } from './booking.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -9,28 +10,27 @@ import { NotFoundException, ConflictException, BadRequestException } from '@nest
 
 describe('BookingService', () => {
   let service: BookingService;
-  let prisma: PrismaService;
   let eventEmitter: EventEmitter2;
-  let expirationQueue: any;
+  let expirationQueue: { add: jest.Mock };
 
   const mockPrismaService = {
     property: {
-      findUnique: jest.fn(),
+      findUnique: jest.fn<Promise<unknown>, unknown[]>(),
     },
     booking: {
-      findFirst: jest.fn(),
-      findUnique: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-      updateMany: jest.fn(),
+      findFirst: jest.fn<Promise<unknown>, unknown[]>(),
+      findUnique: jest.fn<Promise<unknown>, unknown[]>(),
+      create: jest.fn<Promise<unknown>, unknown[]>(),
+      update: jest.fn<Promise<unknown>, unknown[]>(),
+      updateMany: jest.fn<Promise<unknown>, unknown[]>(),
     },
     client: {
       booking: {
-        updateMany: jest.fn(),
+        updateMany: jest.fn<Promise<unknown>, unknown[]>(),
       },
     },
-    $queryRaw: jest.fn(),
-    $transaction: jest.fn(async (callback) => {
+    $queryRaw: jest.fn<Promise<unknown>, unknown[]>(),
+    $transaction: jest.fn((callback: (tx: unknown) => unknown) => {
       const tx = {
         booking: mockPrismaService.booking,
         $queryRaw: mockPrismaService.$queryRaw,
@@ -40,15 +40,15 @@ describe('BookingService', () => {
   };
 
   const mockEventEmitter = {
-    emit: jest.fn(),
+    emit: jest.fn<void, unknown[]>(),
   };
 
   const mockConfigService = {
-    get: jest.fn().mockReturnValue(15),
+    get: jest.fn<number, unknown[]>().mockReturnValue(15),
   };
 
   const mockQueue = {
-    add: jest.fn(),
+    add: jest.fn<Promise<void>, unknown[]>(),
   };
 
   beforeEach(async () => {
@@ -63,7 +63,6 @@ describe('BookingService', () => {
     }).compile();
 
     service = module.get<BookingService>(BookingService);
-    prisma = module.get<PrismaService>(PrismaService);
     eventEmitter = module.get<EventEmitter2>(EventEmitter2);
     expirationQueue = module.get(getQueueToken('booking-expiration'));
 
@@ -162,12 +161,10 @@ describe('BookingService', () => {
         version: 1,
       };
 
-      mockPrismaService.booking.findUnique
-        .mockResolvedValueOnce(booking)
-        .mockResolvedValueOnce({
-          ...booking,
-          status: BookingStatus.CONFIRMED,
-        });
+      mockPrismaService.booking.findUnique.mockResolvedValueOnce(booking).mockResolvedValueOnce({
+        ...booking,
+        status: BookingStatus.CONFIRMED,
+      });
       mockPrismaService.client.booking.updateMany.mockResolvedValue({ count: 1 });
 
       const result = await service.confirm('booking-1');
@@ -201,12 +198,10 @@ describe('BookingService', () => {
         status: BookingStatus.PENDING_PAYMENT,
       };
 
-      mockPrismaService.booking.findUnique
-        .mockResolvedValueOnce(booking)
-        .mockResolvedValueOnce({
-          ...booking,
-          status: BookingStatus.CANCELLED,
-        });
+      mockPrismaService.booking.findUnique.mockResolvedValueOnce(booking).mockResolvedValueOnce({
+        ...booking,
+        status: BookingStatus.CANCELLED,
+      });
       mockPrismaService.booking.update.mockResolvedValue({
         ...booking,
         status: BookingStatus.CANCELLED,

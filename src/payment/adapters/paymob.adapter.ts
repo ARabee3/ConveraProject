@@ -15,25 +15,17 @@ interface PaymobPayload {
 export class PaymobAdapter implements PaymentAdapter {
   constructor(private readonly configService: ConfigService) {}
 
-  async initializePayment(
-    bookingId: string,
-    amount: number,
-    currency: string,
-  ): Promise<{ providerRef: string; paymentUrl: string }> {
+  initializePayment(bookingId: string): Promise<{ providerRef: string; paymentUrl: string }> {
     // Simplified Paymob flow: returns a placeholder payment URL
     // In production, this would call Paymob's auth/order/payment-key APIs
-    const providerRef = `paymob_${bookingId}_${Date.now()}`;
-    return {
+    const providerRef = `paymob_${bookingId}_${Date.now().toString()}`;
+    return Promise.resolve({
       providerRef,
       paymentUrl: `https://accept.paymob.com/api/acceptance/iframes/PLACEHOLDER?payment_token=${providerRef}`,
-    };
+    });
   }
 
-  verifyWebhookSignature(
-    payload: Buffer | string,
-    signature: string,
-    secret: string,
-  ): boolean {
+  verifyWebhookSignature(payload: Buffer | string, signature: string, secret: string): boolean {
     const hmac = crypto.createHmac('sha512', secret);
     hmac.update(payload as string);
     const digest = hmac.digest('hex');

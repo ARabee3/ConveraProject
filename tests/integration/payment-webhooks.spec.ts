@@ -24,14 +24,21 @@ describe('Payment Webhooks (integration)', () => {
           paymentUrl: 'https://test.com/pay',
         }),
         verifyWebhookSignature: jest.fn().mockReturnValue(true),
-        extractPaymentResult: jest.fn().mockImplementation((payload: any) => {
-          const data = payload.data?.object;
-          return {
-            success: payload.type === 'payment_intent.succeeded',
-            providerRef: data?.id || '',
-            bookingId: data?.metadata?.bookingId,
-          };
-        }),
+        extractPaymentResult: jest
+          .fn()
+          .mockImplementation(
+            (payload: {
+              type?: string;
+              data?: { object?: { id?: string; metadata?: { bookingId?: string } } };
+            }) => {
+              const data = payload.data?.object;
+              return {
+                success: payload.type === 'payment_intent.succeeded',
+                providerRef: data?.id || '',
+                bookingId: data?.metadata?.bookingId,
+              };
+            },
+          ),
       })
       .compile();
 

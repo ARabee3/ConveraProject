@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Post,
-  Body,
-  Headers,
-  Req,
-  BadRequestException,
-  HttpCode,
-  HttpStatus,
-} from '@nestjs/common';
+import { Controller, Post, Body, Headers, Req, HttpCode, HttpStatus } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import { BookingService } from '../booking/booking.service';
 import { PaymentProvider } from '@prisma/client';
@@ -26,9 +17,6 @@ export class PaymentController {
     @Body('bookingId') bookingId: string,
     @Body('provider') provider: PaymentProvider,
   ) {
-    if (!bookingId || !provider) {
-      throw new BadRequestException('bookingId and provider are required.');
-    }
     return this.paymentService.initializePayment(bookingId, provider);
   }
 
@@ -39,7 +27,7 @@ export class PaymentController {
     @Body() payload: unknown,
     @Headers('stripe-signature') signature: string,
   ) {
-    const rawBody = (req as any).rawBody;
+    const rawBody = (req as unknown as { rawBody?: Buffer | string }).rawBody;
     const result = await this.paymentService.processWebhook(
       PaymentProvider.STRIPE,
       payload,
@@ -63,7 +51,7 @@ export class PaymentController {
     @Body() payload: unknown,
     @Headers('hmac') signature: string,
   ) {
-    const rawBody = (req as any).rawBody;
+    const rawBody = (req as unknown as { rawBody?: Buffer | string }).rawBody;
     const result = await this.paymentService.processWebhook(
       PaymentProvider.PAYMOB,
       payload,

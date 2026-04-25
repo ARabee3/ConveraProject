@@ -193,7 +193,7 @@ export class EventsService {
     if (event.eligibility) {
       result.eligibility = {
         minAge: event.eligibility.minAge ?? undefined,
-        ticketTypes: (event.eligibility.ticketTypes as string[]) || [],
+        ticketTypes: event.eligibility.ticketTypes as string[],
         specialRequirements: event.eligibility.specialRequirements ?? undefined,
       };
     }

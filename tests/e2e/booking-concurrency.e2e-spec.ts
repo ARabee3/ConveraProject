@@ -50,8 +50,8 @@ describe('Booking Concurrency (e2e)', () => {
       password: 'Password123!',
     });
 
-    accessToken = loginResponse.body.data.accessToken;
-    const customerId = loginResponse.body.data.user.id;
+    accessToken = (loginResponse.body as { data: { accessToken: string } }).data.accessToken;
+    const customerId = (loginResponse.body as { data: { user: { id: string } } }).data.user.id;
 
     // Create a property
     const property = await prismaService.property.create({

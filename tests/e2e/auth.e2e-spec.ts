@@ -62,7 +62,11 @@ describe('AuthController (e2e)', () => {
         .send({ email: 'bad-email', password: '123' })
         .expect(400)
         .expect((res: request.Response) => {
-          const body = res.body;
+          const body = res.body as {
+            error: string;
+            message: string | string[];
+            statusCode: number;
+          };
           expect(body.error).toBe('Bad Request');
           expect(Array.isArray(body.message)).toBe(true);
           expect(body.statusCode).toBe(400);
@@ -72,7 +76,7 @@ describe('AuthController (e2e)', () => {
     it('should register a new user successfully', async () => {
       const response = await request(httpServer).post('/auth/register').send(testUser).expect(201);
 
-      expect(response.body.message).toContain('registered successfully');
+      expect((response.body as { message: string }).message).toContain('registered successfully');
     });
 
     it('should fail to login if not verified', async () => {
@@ -81,22 +85,22 @@ describe('AuthController (e2e)', () => {
         .send(testUser)
         .expect(401)
         .expect((res: request.Response) => {
-          expect(res.body.message).toBe('User email not verified.');
+          expect((res.body as { message: string }).message).toBe('User email not verified.');
         });
     });
 
     it('should verify OTP and activate account', async () => {
       // Fetch OTP from Redis
       const key = `otp:verify:${testUser.email}`;
-      const dataStr = await redis.get(key);
-      const { code } = JSON.parse(dataStr!);
+      const dataStr = (await redis.get(key)) as string;
+      const { code } = JSON.parse(dataStr) as { code: string };
 
       await request(httpServer)
         .post('/auth/verify')
         .send({ email: testUser.email, code })
         .expect(200)
         .expect((res: request.Response) => {
-          expect(res.body.message).toBe('Email verified successfully.');
+          expect((res.body as { message: string }).message).toBe('Email verified successfully.');
         });
 
       const user = await prismaService.user.findUnique({ where: { email: testUser.email } });
@@ -106,11 +110,12 @@ describe('AuthController (e2e)', () => {
     it('should login successfully and return tokens', async () => {
       const response = await request(httpServer).post('/auth/login').send(testUser).expect(200);
 
-      expect(response.body.data.accessToken).toBeDefined();
-      expect(response.body.data.refreshToken).toBeDefined();
+      const data = (response.body as { data: { accessToken: string; refreshToken: string } }).data;
+      expect(data.accessToken).toBeDefined();
+      expect(data.refreshToken).toBeDefined();
 
-      accessToken = response.body.data.accessToken;
-      refreshToken = response.body.data.refreshToken;
+      accessToken = data.accessToken;
+      refreshToken = data.refreshToken;
     });
 
     it('should refresh tokens using the refresh token', async () => {
@@ -119,12 +124,13 @@ describe('AuthController (e2e)', () => {
         .send({ refreshToken })
         .expect(200);
 
-      expect(response.body.data.accessToken).toBeDefined();
-      expect(response.body.data.refreshToken).toBeDefined();
-      expect(response.body.data.accessToken).not.toBe(accessToken);
+      const data = (response.body as { data: { accessToken: string; refreshToken: string } }).data;
+      expect(data.accessToken).toBeDefined();
+      expect(data.refreshToken).toBeDefined();
+      expect(data.accessToken).not.toBe(accessToken);
 
-      accessToken = response.body.data.accessToken;
-      refreshToken = response.body.data.refreshToken;
+      accessToken = data.accessToken;
+      refreshToken = data.refreshToken;
     });
   });
 
@@ -138,7 +144,7 @@ describe('AuthController (e2e)', () => {
 
       // Relogin to get new token with role
       const loginRes = await request(httpServer).post('/auth/login').send(testUser);
-      const adminToken = loginRes.body.data.accessToken;
+      const adminToken = (loginRes.body as { data: { accessToken: string } }).data.accessToken;
 
       await request(httpServer)
         .get('/auth/test-rbac')
@@ -154,7 +160,7 @@ describe('AuthController (e2e)', () => {
       });
 
       const loginRes = await request(httpServer).post('/auth/login').send(testUser);
-      const customerToken = loginRes.body.data.accessToken;
+      const customerToken = (loginRes.body as { data: { accessToken: string } }).data.accessToken;
 
       await request(httpServer)
         .get('/auth/test-rbac')
@@ -170,13 +176,13 @@ describe('AuthController (e2e)', () => {
         .send({ email: testUser.email })
         .expect(200);
 
-      expect(response.body.message).toContain('reset code has been sent');
+      expect((response.body as { message: string }).message).toContain('reset code has been sent');
     });
 
     it('should reset password with valid OTP and new password', async () => {
       const key = `otp:reset:${testUser.email}`;
-      const dataStr = await redis.get(key);
-      const { code } = JSON.parse(dataStr!);
+      const dataStr = (await redis.get(key)) as string;
+      const { code } = JSON.parse(dataStr) as { code: string };
 
       const newPassword = 'NewPassword123!';
 
