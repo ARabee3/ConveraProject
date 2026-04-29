@@ -27,6 +27,8 @@ model User {
   properties    Property[]
   reviews       Review[]
   bookings      Booking[]
+  chatSessions  ChatSession[]
+  chatMessages  ChatMessage[]
 
   @@index([email])
   @@map("users")
@@ -79,6 +81,7 @@ model Property {
   reviews               Review[]
   availabilityOverrides AvailabilityOverride[]
   bookings              Booking[]
+  chatSessions          ChatSession[]
 
   @@index([hostId])
   @@index([isActive])
@@ -251,6 +254,7 @@ model Booking {
   customer     User          @relation(fields: [customerId], references: [id], onDelete: Cascade)
   transactions Transaction[]
   review       Review?
+  chatSession  ChatSession?
 
   @@index([propertyId])
   @@index([customerId])
@@ -274,6 +278,42 @@ model Transaction {
   @@index([bookingId])
   @@index([provider])
   @@map("transactions")
+}
+
+// ─── Chat Domain ──────────────────────────────────────────────────────────────
+
+model ChatSession {
+  id         String   @id @default(uuid())
+  propertyId String
+  customerId String
+  bookingId  String?  @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  property   Property     @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  customer   User         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  booking    Booking?     @relation(fields: [bookingId], references: [id])
+  messages   ChatMessage[]
+
+  @@index([propertyId])
+  @@index([customerId])
+  @@map("chat_sessions")
+}
+
+model ChatMessage {
+  id        String   @id @default(uuid())
+  sessionId String
+  senderId  String
+  content   String   @db.Text
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sender    User        @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([senderId])
+  @@map("chat_messages")
 }
 
 // ─── Versioned Base Entity (used by locking tests) ────────────────────────────

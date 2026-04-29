@@ -440,6 +440,62 @@ Endpoints for property reservations, payment processing, and transaction managem
 
 ---
 
+## 💬 Real-Time Communications (Spec 7)
+
+Endpoints and WebSocket events for secure, moderated chat between Customers and Hosts.
+
+### REST API
+
+#### 1. Retrieve Chat History
+`GET /chat/:sessionId/history`
+
+**Auth Required**: `Bearer Token` (Participant only)
+**Query Parameters**:
+- `limit` (number): Max messages to return (default: 50).
+- `offset` (number): Pagination offset.
+
+**Response**:
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "sessionId": "uuid",
+      "senderId": "uuid",
+      "content": "Hello!",
+      "createdAt": "2026-04-25T12:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+### WebSocket Gateway
+
+**Endpoint**: `ws://localhost:3000/chat`
+**Namespace**: `/chat`
+**Auth**: JWT must be provided in the `Authorization` header or `auth.token` object.
+
+#### 1. Client -> Server Events
+
+| Event | Payload | Description |
+|-------|---------|-------------|
+| `subscribe` | `{ "sessionId": "uuid" }` | Join a specific chat room. |
+| `send_message` | `{ "sessionId": "uuid", "content": "text" }` | Send a new message. |
+| `mark_as_read` | `{ "sessionId": "uuid", "lastMessageId": "uuid" }` | Sync read receipts. |
+
+#### 2. Server -> Client Events
+
+| Event | Payload | Description |
+|-------|---------|-------------|
+| `new_message` | `ChatMessagePayload` | Broadcasted to room members. |
+| `read_receipt` | `{ "sessionId": "uuid", "lastReadMessageId": "uuid", "readerId": "uuid" }` | Notification of Seen status. |
+| `policy_violation` | `{ "sessionId": "uuid", "message": "string" }` | Sent on moderation rejection. |
+| `exception` | `{ "status": "error", "message": "string" }` | Generic error notification. |
+
+---
+
 ## 🚀 Postman Testing Guide
 
 ### 1. Environment Setup

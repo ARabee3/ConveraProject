@@ -13,6 +13,7 @@ import { ReviewsModule } from './reviews/reviews.module';
 import { EventsModule } from './events/events.module';
 import { BookingModule } from './booking/booking.module';
 import { PaymentModule } from './payment/payment.module';
+import { ChatModule } from './chat/chat.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { BullModule } from '@nestjs/bullmq';
 import { ConfigService } from '@nestjs/config';
@@ -28,6 +29,7 @@ import { ConfigService } from '@nestjs/config';
     EventsModule,
     BookingModule,
     PaymentModule,
+    ChatModule,
     EventEmitterModule.forRoot(),
     BullModule.forRootAsync({
       imports: [AppConfigModule],

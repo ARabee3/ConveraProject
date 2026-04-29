@@ -23,67 +23,132 @@
       "Error": {
         "type": "object",
         "properties": {
-          "statusCode": { "type": "integer" },
-          "message": { "type": "string" },
-          "error": { "type": "string" }
+          "statusCode": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          },
+          "error": {
+            "type": "string"
+          }
         }
       },
       "EventSearchResult": {
         "type": "object",
         "properties": {
-          "id": { "type": "string", "format": "uuid" },
-          "title": { "type": "string" },
-          "date": { "type": "string", "format": "date-time" },
-          "address": { "type": "string" },
-          "price": { "type": "number" },
-          "coverImage": { "type": "string" },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "address": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number"
+          },
+          "coverImage": {
+            "type": "string"
+          },
           "category": {
             "type": "object",
             "properties": {
-              "id": { "type": "string" },
-              "name": { "type": "string" }
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
             }
           },
-          "remainingSpots": { "type": "integer" },
-          "isSoldOut": { "type": "boolean" }
+          "remainingSpots": {
+            "type": "integer"
+          },
+          "isSoldOut": {
+            "type": "boolean"
+          }
         }
       },
       "EventDetailResult": {
         "allOf": [
-          { "$ref": "#/components/schemas/EventSearchResult" },
+          {
+            "$ref": "#/components/schemas/EventSearchResult"
+          },
           {
             "type": "object",
             "properties": {
-              "description": { "type": "string" },
-              "locationLat": { "type": "number" },
-              "locationLng": { "type": "number" },
-              "status": { "type": "string", "enum": ["ACTIVE", "CANCELLED"] },
-              "maxCapacity": { "type": "integer" },
+              "description": {
+                "type": "string"
+              },
+              "locationLat": {
+                "type": "number"
+              },
+              "locationLng": {
+                "type": "number"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "ACTIVE",
+                  "CANCELLED"
+                ]
+              },
+              "maxCapacity": {
+                "type": "integer"
+              },
               "galleryImages": {
                 "type": "array",
                 "items": {
                   "type": "object",
                   "properties": {
-                    "id": { "type": "string" },
-                    "imageUrl": { "type": "string" },
-                    "displayOrder": { "type": "integer" }
+                    "id": {
+                      "type": "string"
+                    },
+                    "imageUrl": {
+                      "type": "string"
+                    },
+                    "displayOrder": {
+                      "type": "integer"
+                    }
                   }
                 }
               },
               "eligibility": {
                 "type": "object",
                 "properties": {
-                  "minAge": { "type": "integer" },
-                  "ticketTypes": { "type": "array", "items": { "type": "string" } },
-                  "specialRequirements": { "type": "string" }
+                  "minAge": {
+                    "type": "integer"
+                  },
+                  "ticketTypes": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "specialRequirements": {
+                    "type": "string"
+                  }
                 }
               },
               "source": {
                 "type": "object",
                 "properties": {
-                  "sourceType": { "type": "string" },
-                  "externalProviderName": { "type": "string" },
-                  "externalEventId": { "type": "string" }
+                  "sourceType": {
+                    "type": "string"
+                  },
+                  "externalProviderName": {
+                    "type": "string"
+                  },
+                  "externalEventId": {
+                    "type": "string"
+                  }
                 }
               }
             }
@@ -93,8 +158,16 @@
       "EventSearchResponse": {
         "type": "object",
         "properties": {
-          "events": { "type": "array", "items": { "$ref": "#/components/schemas/EventSearchResult" } },
-          "nextCursor": { "type": "string", "nullable": true }
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EventSearchResult"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          }
         }
       }
     }
@@ -102,14 +175,19 @@
   "paths": {
     "/health": {
       "get": {
-        "tags": ["Infrastructure"],
+        "tags": [
+          "Infrastructure"
+        ],
         "summary": "Health Check",
         "responses": {
           "200": {
             "description": "System health status",
             "content": {
               "application/json": {
-                "example": { "status": "ok", "timestamp": "2026-04-17T17:32:06.023Z" }
+                "example": {
+                  "status": "ok",
+                  "timestamp": "2026-04-17T17:32:06.023Z"
+                }
               }
             }
           }
@@ -118,25 +196,42 @@
     },
     "/hello": {
       "get": {
-        "tags": ["Infrastructure"],
+        "tags": [
+          "Infrastructure"
+        ],
         "summary": "Internationalized Hello",
         "parameters": [
           {
             "name": "Accept-Language",
             "in": "header",
-            "schema": { "type": "string", "enum": ["en", "ar"], "default": "en" }
+            "schema": {
+              "type": "string",
+              "enum": [
+                "en",
+                "ar"
+              ],
+              "default": "en"
+            }
           },
           {
             "name": "x-custom-lang",
             "in": "header",
-            "schema": { "type": "string", "enum": ["en", "ar"] }
+            "schema": {
+              "type": "string",
+              "enum": [
+                "en",
+                "ar"
+              ]
+            }
           }
         ],
         "responses": {
           "200": {
             "description": "Translated greeting",
             "content": {
-              "text/plain": { "example": "Hello World" }
+              "text/plain": {
+                "example": "Hello World"
+              }
             }
           }
         }
@@ -144,7 +239,9 @@
     },
     "/auth/register": {
       "post": {
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "summary": "Register User",
         "requestBody": {
           "required": true,
@@ -152,23 +249,37 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["email", "password"],
+                "required": [
+                  "email",
+                  "password"
+                ],
                 "properties": {
-                  "email": { "type": "string", "format": "email", "example": "test@example.com" },
-                  "password": { "type": "string", "example": "Password123!" }
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "test@example.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "Password123!"
+                  }
                 }
               }
             }
           }
         },
         "responses": {
-          "201": { "description": "User created successfully" }
+          "201": {
+            "description": "User created successfully"
+          }
         }
       }
     },
     "/auth/verify": {
       "post": {
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "summary": "Verify OTP",
         "requestBody": {
           "required": true,
@@ -176,23 +287,36 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["email", "code"],
+                "required": [
+                  "email",
+                  "code"
+                ],
                 "properties": {
-                  "email": { "type": "string", "example": "test@example.com" },
-                  "code": { "type": "string", "example": "123456" }
+                  "email": {
+                    "type": "string",
+                    "example": "test@example.com"
+                  },
+                  "code": {
+                    "type": "string",
+                    "example": "123456"
+                  }
                 }
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "OTP verified" }
+          "200": {
+            "description": "OTP verified"
+          }
         }
       }
     },
     "/auth/login": {
       "post": {
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "summary": "Login",
         "requestBody": {
           "required": true,
@@ -200,10 +324,19 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["email", "password"],
+                "required": [
+                  "email",
+                  "password"
+                ],
                 "properties": {
-                  "email": { "type": "string", "example": "test@example.com" },
-                  "password": { "type": "string", "example": "Password123!" }
+                  "email": {
+                    "type": "string",
+                    "example": "test@example.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "Password123!"
+                  }
                 }
               }
             }
@@ -218,7 +351,11 @@
                   "data": {
                     "accessToken": "ey...",
                     "refreshToken": "...",
-                    "user": { "id": "uuid", "email": "test@example.com", "role": "CUSTOMER" }
+                    "user": {
+                      "id": "uuid",
+                      "email": "test@example.com",
+                      "role": "CUSTOMER"
+                    }
                   }
                 }
               }
@@ -229,7 +366,9 @@
     },
     "/auth/refresh": {
       "post": {
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "summary": "Token Refresh",
         "requestBody": {
           "required": true,
@@ -237,19 +376,27 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "properties": { "refreshToken": { "type": "string" } }
+                "properties": {
+                  "refreshToken": {
+                    "type": "string"
+                  }
+                }
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Tokens refreshed" }
+          "200": {
+            "description": "Tokens refreshed"
+          }
         }
       }
     },
     "/auth/forgot-password": {
       "post": {
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "summary": "Forgot Password",
         "requestBody": {
           "required": true,
@@ -257,19 +404,28 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "properties": { "email": { "type": "string", "example": "test@example.com" } }
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "example": "test@example.com"
+                  }
+                }
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "OTP sent to email" }
+          "200": {
+            "description": "OTP sent to email"
+          }
         }
       }
     },
     "/auth/reset-password": {
       "post": {
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "summary": "Reset Password",
         "requestBody": {
           "required": true,
@@ -278,74 +434,171 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "email": { "type": "string" },
-                  "code": { "type": "string" },
-                  "password": { "type": "string" }
+                  "email": {
+                    "type": "string"
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
                 }
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Password reset successful" }
+          "200": {
+            "description": "Password reset successful"
+          }
         }
       }
     },
     "/auth/test-rbac": {
       "get": {
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "summary": "Test Admin Access",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "responses": {
-          "200": { "description": "Authorized" },
-          "403": { "description": "Forbidden" }
+          "200": {
+            "description": "Authorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
         }
       }
     },
     "/properties": {
       "get": {
-        "tags": ["Properties"],
+        "tags": [
+          "Properties"
+        ],
         "summary": "Search Properties (Public)",
         "parameters": [
-          { "name": "lat", "in": "query", "schema": { "type": "number" } },
-          { "name": "lng", "in": "query", "schema": { "type": "number" } },
-          { "name": "radius", "in": "query", "schema": { "type": "number" } },
-          { "name": "priceMin", "in": "query", "schema": { "type": "number" } },
-          { "name": "priceMax", "in": "query", "schema": { "type": "number" } },
-          { "name": "checkIn", "in": "query", "schema": { "type": "string", "format": "date" } },
-          { "name": "checkOut", "in": "query", "schema": { "type": "string", "format": "date" } },
-          { "name": "ratingMin", "in": "query", "schema": { "type": "number" } }
+          {
+            "name": "lat",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "lng",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "radius",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "priceMin",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "priceMax",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "checkIn",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "checkOut",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "ratingMin",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
         ],
         "responses": {
-          "200": { "description": "List of properties" }
+          "200": {
+            "description": "List of properties"
+          }
         }
       }
     },
     "/properties/{id}": {
       "get": {
-        "tags": ["Properties"],
+        "tags": [
+          "Properties"
+        ],
         "summary": "Property Details (Public)",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
-          "200": { "description": "Full property details" }
+          "200": {
+            "description": "Full property details"
+          }
         }
       }
     },
     "/host/properties": {
       "get": {
-        "tags": ["Host"],
+        "tags": [
+          "Host"
+        ],
         "summary": "Host: List My Properties",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "responses": {
-          "200": { "description": "List of host properties" }
+          "200": {
+            "description": "List of host properties"
+          }
         }
       },
       "post": {
-        "tags": ["Host"],
+        "tags": [
+          "Host"
+        ],
         "summary": "Host: Create Property",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -353,32 +606,77 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "title": { "type": "string" },
-                  "description": { "type": "string" },
-                  "type": { "type": "string", "enum": ["APARTMENT", "HOUSE", "VILLA", "STUDIO"] },
-                  "latitude": { "type": "number" },
-                  "longitude": { "type": "number" },
-                  "address": { "type": "string" },
-                  "amenities": { "type": "array", "items": { "type": "string" } },
-                  "imageUrls": { "type": "array", "items": { "type": "string" } },
-                  "basePrice": { "type": "number" }
+                  "title": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "APARTMENT",
+                      "HOUSE",
+                      "VILLA",
+                      "STUDIO"
+                    ]
+                  },
+                  "latitude": {
+                    "type": "number"
+                  },
+                  "longitude": {
+                    "type": "number"
+                  },
+                  "address": {
+                    "type": "string"
+                  },
+                  "amenities": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "imageUrls": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "basePrice": {
+                    "type": "number"
+                  }
                 }
               }
             }
           }
         },
         "responses": {
-          "201": { "description": "Property created" }
+          "201": {
+            "description": "Property created"
+          }
         }
       }
     },
     "/host/properties/{id}/availability": {
       "post": {
-        "tags": ["Host"],
+        "tags": [
+          "Host"
+        ],
         "summary": "Host: Set Availability/Price Override",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "requestBody": {
           "required": true,
@@ -387,27 +685,56 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "startDate": { "type": "string", "format": "date" },
-                  "endDate": { "type": "string", "format": "date" },
-                  "status": { "type": "string", "enum": ["AVAILABLE", "BLOCKED"] },
-                  "overridePrice": { "type": "number" }
+                  "startDate": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "endDate": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "AVAILABLE",
+                      "BLOCKED"
+                    ]
+                  },
+                  "overridePrice": {
+                    "type": "number"
+                  }
                 }
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Availability updated" }
+          "200": {
+            "description": "Availability updated"
+          }
         }
       }
     },
     "/properties/{propertyId}/reviews": {
       "post": {
-        "tags": ["Properties"],
+        "tags": [
+          "Properties"
+        ],
         "summary": "Customer: Submit Review",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
-          { "name": "propertyId", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "propertyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "requestBody": {
           "required": true,
@@ -416,36 +743,133 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "bookingId": { "type": "string" },
-                  "rating": { "type": "integer", "minimum": 1, "maximum": 5 },
-                  "comment": { "type": "string" }
+                  "bookingId": {
+                    "type": "string"
+                  },
+                  "rating": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5
+                  },
+                  "comment": {
+                    "type": "string"
+                  }
                 }
               }
             }
           }
         },
         "responses": {
-          "201": { "description": "Review submitted" }
+          "201": {
+            "description": "Review submitted"
+          }
         }
       }
     },
     "/events": {
       "get": {
-        "tags": ["Events"],
+        "tags": [
+          "Events"
+        ],
         "summary": "Search Events (Public)",
         "description": "Search and browse events with cursor-based pagination. Automatically filters to active events with future dates.",
         "parameters": [
-          { "name": "cursor", "in": "query", "schema": { "type": "string" }, "description": "Pagination cursor from previous response" },
-          { "name": "limit", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 20 }, "description": "Results per page" },
-          { "name": "lat", "in": "query", "schema": { "type": "number" }, "description": "Latitude for geospatial search" },
-          { "name": "lng", "in": "query", "schema": { "type": "number" }, "description": "Longitude for geospatial search" },
-          { "name": "radius", "in": "query", "schema": { "type": "number" }, "description": "Search radius in km" },
-          { "name": "date", "in": "query", "schema": { "type": "string", "format": "date" }, "description": "Filter events on or after date" },
-          { "name": "categoryId", "in": "query", "schema": { "type": "string", "format": "uuid" }, "description": "Filter by category UUID" },
-          { "name": "priceMin", "in": "query", "schema": { "type": "number" }, "description": "Minimum price filter" },
-          { "name": "priceMax", "in": "query", "schema": { "type": "number" }, "description": "Maximum price filter" },
-          { "name": "minAge", "in": "query", "schema": { "type": "integer" }, "description": "Minimum age restriction filter" },
-          { "name": "ticketTypes", "in": "query", "schema": { "type": "array", "items": { "type": "string" } }, "description": "Filter by ticket types" }
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Pagination cursor from previous response"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "description": "Results per page"
+          },
+          {
+            "name": "lat",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            },
+            "description": "Latitude for geospatial search"
+          },
+          {
+            "name": "lng",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            },
+            "description": "Longitude for geospatial search"
+          },
+          {
+            "name": "radius",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            },
+            "description": "Search radius in km"
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Filter events on or after date"
+          },
+          {
+            "name": "categoryId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Filter by category UUID"
+          },
+          {
+            "name": "priceMin",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            },
+            "description": "Minimum price filter"
+          },
+          {
+            "name": "priceMax",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            },
+            "description": "Maximum price filter"
+          },
+          {
+            "name": "minAge",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Minimum age restriction filter"
+          },
+          {
+            "name": "ticketTypes",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "description": "Filter by ticket types"
+          }
         ],
         "responses": {
           "200": {
@@ -459,9 +883,12 @@
                       "title": "Summer Music Festival",
                       "date": "2026-06-15T20:00:00Z",
                       "address": "123 Concert Ave, Cairo",
-                      "price": 150.00,
+                      "price": 150.0,
                       "coverImage": "https://cdn.example.com/events/cover.jpg",
-                      "category": { "id": "550e8400-e29b-41d4-a716-446655440001", "name": "Concert" },
+                      "category": {
+                        "id": "550e8400-e29b-41d4-a716-446655440001",
+                        "name": "Concert"
+                      },
                       "remainingSpots": 500,
                       "isSoldOut": false
                     }
@@ -476,11 +903,22 @@
     },
     "/events/{id}": {
       "get": {
-        "tags": ["Events"],
+        "tags": [
+          "Events"
+        ],
         "summary": "Event Details (Public)",
         "description": "Get full event details including gallery images, eligibility restrictions, and source information.",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" }, "description": "Event UUID" }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Event UUID"
+          }
         ],
         "responses": {
           "200": {
@@ -493,9 +931,12 @@
                   "description": "The biggest music event of the summer...",
                   "date": "2026-06-15T20:00:00Z",
                   "address": "123 Concert Ave, Cairo",
-                  "price": 150.00,
+                  "price": 150.0,
                   "coverImage": "https://cdn.example.com/events/cover.jpg",
-                  "category": { "id": "550e8400-e29b-41d4-a716-446655440001", "name": "Concert" },
+                  "category": {
+                    "id": "550e8400-e29b-41d4-a716-446655440001",
+                    "name": "Concert"
+                  },
                   "remainingSpots": 500,
                   "isSoldOut": false,
                   "locationLat": 30.0444,
@@ -503,11 +944,19 @@
                   "status": "ACTIVE",
                   "maxCapacity": 1000,
                   "galleryImages": [
-                    { "id": "550e8400-e29b-41d4-a716-446655440003", "imageUrl": "https://cdn.example.com/events/gallery1.jpg", "displayOrder": 0 }
+                    {
+                      "id": "550e8400-e29b-41d4-a716-446655440003",
+                      "imageUrl": "https://cdn.example.com/events/gallery1.jpg",
+                      "displayOrder": 0
+                    }
                   ],
                   "eligibility": {
                     "minAge": 18,
-                    "ticketTypes": ["General", "VIP", "VVIP"],
+                    "ticketTypes": [
+                      "General",
+                      "VIP",
+                      "VVIP"
+                    ],
                     "specialRequirements": "Valid ID required for entry"
                   },
                   "source": {
@@ -519,16 +968,25 @@
               }
             }
           },
-          "404": { "description": "Event not found" }
+          "404": {
+            "description": "Event not found"
+          }
         }
       }
     },
     "/admin/events/import": {
       "post": {
-        "tags": ["Admin", "Events"],
+        "tags": [
+          "Admin",
+          "Events"
+        ],
         "summary": "Admin: Trigger Event Import",
         "description": "Triggers manual synchronization of events from configured external providers. Uses upsert logic - existing events are updated, new events are created.",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Import completed",
@@ -542,8 +1000,76 @@
               }
             }
           },
-          "401": { "description": "Unauthorized" },
-          "403": { "description": "Forbidden - Admin role required" }
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - Admin role required"
+          }
+        }
+      }
+    },
+    "/chat/{sessionId}/history": {
+      "get": {
+        "tags": [
+          "Chat"
+        ],
+        "summary": "Retrieve Chat History",
+        "description": "Fetches historical messages for a specific session. Only participants can access.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Historical messages",
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "id": "uuid",
+                      "sessionId": "uuid",
+                      "senderId": "uuid",
+                      "content": "Hello!",
+                      "createdAt": "2026-04-25T12:00:00Z"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Not a member"
+          }
         }
       }
     }
