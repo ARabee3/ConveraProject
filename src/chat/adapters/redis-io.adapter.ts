@@ -20,6 +20,7 @@ export class RedisIoAdapter extends IoAdapter {
     const subClient = pubClient.duplicate();
 
     this.adapterConstructor = createAdapter(pubClient, subClient);
+    await Promise.resolve();
   }
 
   createIOServer(port: number, options?: ServerOptions): Server {
