@@ -18,7 +18,6 @@ export class ChatRateLimiterService {
   async checkLimit(userId: string): Promise<RateLimitResult> {
     const key = `chat:rate_limit:${userId}`;
     const now = Math.floor(Date.now() / 1000);
-    const windowStart = now - this.windowSeconds;
 
     try {
       const count = await this.redisService.incrementWithTtl(key, this.windowSeconds);
@@ -27,9 +26,15 @@ export class ChatRateLimiterService {
         return { allowed: false, remaining: 0, resetTime: now + this.windowSeconds };
       }
 
-      return { allowed: true, remaining: this.maxRequests - count, resetTime: now + this.windowSeconds };
+      return {
+        allowed: true,
+        remaining: this.maxRequests - count,
+        resetTime: now + this.windowSeconds,
+      };
     } catch (error) {
-      this.logger.error(`Rate limiter error for user ${userId}: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.error(
+        `Rate limiter error for user ${userId}: ${error instanceof Error ? error.message : String(error)}`,
+      );
       // Fail open if Redis is unavailable
       return { allowed: true, remaining: this.maxRequests, resetTime: now + this.windowSeconds };
     }

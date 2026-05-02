@@ -6,6 +6,7 @@ import { AppModule } from '../../src/app.module';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import * as jwt from 'jsonwebtoken';
 import { randomUUID } from 'crypto';
+import { getHttpUrl } from './utils';
 
 const JWT_SECRET = 'fallback_secret';
 process.env.JWT_SECRET = JWT_SECRET;
@@ -23,7 +24,7 @@ describe('ChatGateway Message Exchange (e2e)', () => {
     app = moduleFixture.createNestApplication();
     prismaService = app.get<PrismaService>(PrismaService);
     await app.listen(0);
-    httpUrl = `http://localhost:${(app.getHttpServer().address() as { port: number }).port}`;
+    httpUrl = getHttpUrl(app);
   });
 
   afterAll(async () => {
@@ -75,12 +76,15 @@ describe('ChatGateway Message Exchange (e2e)', () => {
   }
 
   async function createClient(userId: string): Promise<Socket> {
-    const token = jwt.sign({ sub: userId, email: `${userId}@example.com`, role: 'CUSTOMER' }, JWT_SECRET);
+    const token = jwt.sign(
+      { sub: userId, email: `${userId}@example.com`, role: 'CUSTOMER' },
+      JWT_SECRET,
+    );
     const client = io(`${httpUrl}/chat`, {
       transports: ['websocket'],
       auth: { token },
     });
-    return new Promise((resolve, reject) => {
+    return new Promise<Socket>((resolve, reject) => {
       const timeout = setTimeout(() => {
         client.disconnect();
         reject(new Error(`Client ${userId} connection timeout`));
@@ -97,7 +101,15 @@ describe('ChatGateway Message Exchange (e2e)', () => {
   }
 
   it('should allow two clients to exchange messages in the same room', async () => {
-    const { host, customer, property } = await seedData();
+    const { customer, property } = await seedData();
+    const host = await prismaService.user.create({
+      data: {
+        email: `host-${randomUUID()}@example.com`,
+        passwordHash: 'hash',
+        role: 'HOST',
+        isVerified: true,
+      },
+    });
     const session = await prismaService.chatSession.create({
       data: {
         propertyId: property.id,
@@ -109,10 +121,14 @@ describe('ChatGateway Message Exchange (e2e)', () => {
     const client2 = await createClient(host.id);
 
     await new Promise<void>((resolve) => {
-      client1.emit('subscribe', { sessionId: session.id }, () => resolve());
+      client1.emit('subscribe', { sessionId: session.id }, () => {
+        resolve();
+      });
     });
     await new Promise<void>((resolve) => {
-      client2.emit('subscribe', { sessionId: session.id }, () => resolve());
+      client2.emit('subscribe', { sessionId: session.id }, () => {
+        resolve();
+      });
     });
 
     const receivedMessages: Array<Record<string, unknown>> = [];
@@ -121,10 +137,16 @@ describe('ChatGateway Message Exchange (e2e)', () => {
     });
 
     await new Promise<void>((resolve) => {
-      client1.emit('send_message', { sessionId: session.id, content: 'Hello from customer' }, () => resolve());
+      client1.emit(
+        'send_message',
+        { sessionId: session.id, content: 'Hello from customer' },
+        () => {
+          resolve();
+        },
+      );
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await new Promise<void>((resolve) => setTimeout(resolve, 500));
 
     expect(receivedMessages.length).toBe(1);
     expect(receivedMessages[0].content).toBe('Hello from customer');
@@ -135,18 +157,34 @@ describe('ChatGateway Message Exchange (e2e)', () => {
   });
 
   it('should not deliver messages to clients in different rooms', async () => {
-    const { host, customer, property } = await seedData();
-    
+    const { customer, property } = await seedData();
+
     const session1 = await prismaService.chatSession.create({
       data: { propertyId: property.id, customerId: customer.id },
     });
 
     // Create another host and property for session 2
     const host2 = await prismaService.user.create({
-        data: { email: `host2-${randomUUID()}@example.com`, passwordHash: 'hash', role: 'HOST', isVerified: true }
+      data: {
+        email: `host2-${randomUUID()}@example.com`,
+        passwordHash: 'hash',
+        role: 'HOST',
+        isVerified: true,
+      },
     });
     const property2 = await prismaService.property.create({
-        data: { hostId: host2.id, title: 'Prop 2', description: 'D', type: 'APARTMENT', latitude: 0, longitude: 0, address: 'A', amenities: [], imageUrls: [], basePrice: 100 }
+      data: {
+        hostId: host2.id,
+        title: 'Prop 2',
+        description: 'D',
+        type: 'APARTMENT',
+        latitude: 0,
+        longitude: 0,
+        address: 'A',
+        amenities: [],
+        imageUrls: [],
+        basePrice: 100,
+      },
     });
     const session2 = await prismaService.chatSession.create({
       data: { propertyId: property2.id, customerId: customer.id },
@@ -156,10 +194,14 @@ describe('ChatGateway Message Exchange (e2e)', () => {
     const client2 = await createClient(host2.id);
 
     await new Promise<void>((resolve) => {
-      client1.emit('subscribe', { sessionId: session1.id }, () => resolve());
+      client1.emit('subscribe', { sessionId: session1.id }, () => {
+        resolve();
+      });
     });
     await new Promise<void>((resolve) => {
-      client2.emit('subscribe', { sessionId: session2.id }, () => resolve());
+      client2.emit('subscribe', { sessionId: session2.id }, () => {
+        resolve();
+      });
     });
 
     const receivedMessages: Array<Record<string, unknown>> = [];
@@ -168,10 +210,12 @@ describe('ChatGateway Message Exchange (e2e)', () => {
     });
 
     await new Promise<void>((resolve) => {
-      client1.emit('send_message', { sessionId: session1.id, content: 'Hello room A' }, () => resolve());
+      client1.emit('send_message', { sessionId: session1.id, content: 'Hello room A' }, () => {
+        resolve();
+      });
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await new Promise<void>((resolve) => setTimeout(resolve, 500));
 
     expect(receivedMessages.length).toBe(0);
 

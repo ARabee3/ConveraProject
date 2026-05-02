@@ -20,6 +20,8 @@ model User {
   passwordHash String
   role         Role           @default(CUSTOMER)
   isVerified   Boolean        @default(false)
+  isActive     Boolean        @default(true)
+  preferredLocale String      @default("en")
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
 
@@ -29,6 +31,10 @@ model User {
   bookings      Booking[]
   chatSessions  ChatSession[]
   chatMessages  ChatMessage[]
+  notifications            Notification[]
+  notificationPreferences  NotificationPreference[]
+  activityLogs             ActivityLog[] @relation("activityLogs")
+  eventRegistrations       EventRegistration[]
 
   @@index([email])
   @@map("users")
@@ -55,6 +61,12 @@ enum PropertyType {
   HOTEL
 }
 
+enum ListingStatus {
+  ACTIVE
+  HIDDEN
+  REMOVED
+}
+
 enum AvailabilityStatus {
   BLOCKED
   PRICE_OVERRIDE
@@ -73,6 +85,7 @@ model Property {
   imageUrls   Json
   basePrice   Decimal      @db.Decimal(10, 2)
   isActive    Boolean      @default(true)
+  listingStatus ListingStatus @default(ACTIVE)
   version     Int          @default(1)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
@@ -151,6 +164,7 @@ model Event {
   eligibility    EventEligibility?
   source         EventSource?
   galleryImages  EventGalleryImage[]
+  registrations  EventRegistration[]
 
   @@index([categoryId])
   @@index([date])
@@ -216,6 +230,27 @@ model EventGalleryImage {
 
   @@index([eventId])
   @@map("event_gallery_images")
+}
+
+enum EventRegistrationStatus {
+  CONFIRMED
+  CANCELLED
+}
+
+model EventRegistration {
+  id        String                  @id @default(uuid())
+  eventId   String
+  userId    String
+  status    EventRegistrationStatus @default(CONFIRMED)
+  createdAt DateTime                @default(now())
+  updatedAt DateTime                @updatedAt
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+  @@index([userId])
+  @@map("event_registrations")
 }
 
 // ─── Booking & Financial Engine ───────────────────────────────────────────────
@@ -314,6 +349,113 @@ model ChatMessage {
   @@index([sessionId])
   @@index([senderId])
   @@map("chat_messages")
+}
+
+// ─── Notification Domain ──────────────────────────────────────────────────────
+
+enum NotificationType {
+  BOOKING_CONFIRMATION
+  BOOKING_MODIFICATION
+  BOOKING_CANCELLATION
+  EVENT_REMINDER
+  CHAT_DIGEST
+  ACCOUNT_SUSPENSION
+  LISTING_REMOVED
+}
+
+enum NotificationChannel {
+  EMAIL
+}
+
+enum NotificationStatus {
+  PENDING
+  QUEUED
+  SENT
+  DELIVERED
+  FAILED
+}
+
+enum NotificationCategory {
+  REMINDERS
+  CHAT_ALERTS
+}
+
+model Notification {
+  id                String              @id @default(uuid())
+  type              NotificationType
+  recipientId       String
+  channel           NotificationChannel @default(EMAIL)
+  status            NotificationStatus  @default(PENDING)
+  relatedEntityType String
+  relatedEntityId   String
+  subject           String?
+  retryCount        Int                 @default(0)
+  errorMessage      String?             @db.Text
+  createdAt         DateTime            @default(now())
+  deliveredAt       DateTime?
+
+  recipient User @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@index([recipientId])
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model NotificationTemplate {
+  id        String           @id @default(uuid())
+  type      NotificationType
+  locale    String
+  subject   String
+  body      String           @db.Text
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@unique([type, locale])
+  @@map("notification_templates")
+}
+
+model NotificationPreference {
+  id        String               @id @default(uuid())
+  userId    String
+  category  NotificationCategory
+  enabled   Boolean              @default(true)
+  updatedAt DateTime             @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, category])
+  @@index([userId])
+  @@map("notification_preferences")
+}
+
+// ─── Admin Domain ─────────────────────────────────────────────────────────────
+
+enum AdminActionType {
+  USER_SUSPENDED
+  USER_ACTIVATED
+  PROPERTY_HIDDEN
+  PROPERTY_REMOVED
+  PROPERTY_ACTIVATED
+  EVENT_UPDATED
+}
+
+model ActivityLog {
+  id               String          @id @default(uuid())
+  actorId          String
+  actionType       AdminActionType
+  targetEntityType String
+  targetEntityId   String
+  metadata         Json?
+  createdAt        DateTime        @default(now())
+
+  actor User @relation("activityLogs", fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([actorId])
+  @@index([actionType])
+  @@index([createdAt])
+  @@map("activity_logs")
 }
 
 // ─── Versioned Base Entity (used by locking tests) ────────────────────────────

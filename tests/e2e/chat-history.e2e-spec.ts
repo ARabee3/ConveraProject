@@ -12,7 +12,7 @@ process.env.JWT_SECRET = JWT_SECRET;
 describe('ChatGateway History (e2e)', () => {
   let app: INestApplication;
   let prismaService: PrismaService;
-  let httpServer: any;
+  let httpServer: import('http').Server;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -22,7 +22,7 @@ describe('ChatGateway History (e2e)', () => {
     app = moduleFixture.createNestApplication();
     prismaService = app.get<PrismaService>(PrismaService);
     await app.init();
-    httpServer = app.getHttpServer();
+    httpServer = app.getHttpServer() as import('http').Server;
   });
 
   afterAll(async () => {
@@ -74,7 +74,7 @@ describe('ChatGateway History (e2e)', () => {
   }
 
   it('should allow members to retrieve chat history', async () => {
-    const { host, customer, property } = await seedData();
+    const { customer, property } = await seedData();
     const session = await prismaService.chatSession.create({
       data: {
         propertyId: property.id,
@@ -90,28 +90,32 @@ describe('ChatGateway History (e2e)', () => {
       },
     });
 
-    const token = jwt.sign({ sub: customer.id, email: customer.email, role: customer.role }, JWT_SECRET);
+    const token = jwt.sign(
+      { sub: customer.id, email: customer.email, role: customer.role },
+      JWT_SECRET,
+    );
 
     const response = await request(httpServer)
       .get(`/chat/${session.id}/history`)
       .set('Authorization', `Bearer ${token}`);
 
+    const body = response.body as { data: Array<{ content: string }> };
     expect(response.status).toBe(200);
-    expect(response.body.data.length).toBe(1);
-    expect(response.body.data[0].content).toBe('Hello history');
+    expect(body.data.length).toBe(1);
+    expect(body.data[0].content).toBe('Hello history');
   });
 
   it('should reject non-members from retrieving chat history', async () => {
     const { customer, property } = await seedData();
-    
+
     // Some other user
     const otherUser = await prismaService.user.create({
-        data: {
-            email: `other-${randomUUID()}@example.com`,
-            passwordHash: 'hash',
-            role: 'CUSTOMER',
-            isVerified: true,
-        }
+      data: {
+        email: `other-${randomUUID()}@example.com`,
+        passwordHash: 'hash',
+        role: 'CUSTOMER',
+        isVerified: true,
+      },
     });
 
     const session = await prismaService.chatSession.create({
@@ -121,13 +125,17 @@ describe('ChatGateway History (e2e)', () => {
       },
     });
 
-    const token = jwt.sign({ sub: otherUser.id, email: otherUser.email, role: otherUser.role }, JWT_SECRET);
+    const token = jwt.sign(
+      { sub: otherUser.id, email: otherUser.email, role: otherUser.role },
+      JWT_SECRET,
+    );
 
     const response = await request(httpServer)
       .get(`/chat/${session.id}/history`)
       .set('Authorization', `Bearer ${token}`);
 
+    const body = response.body as { message: string };
     expect(response.status).toBe(403);
-    expect(response.body.message).toContain('Unauthorized');
+    expect(body.message).toContain('Unauthorized');
   });
 });

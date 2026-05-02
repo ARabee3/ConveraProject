@@ -61,11 +61,7 @@ export class RedisService implements OnModuleDestroy {
   }
 
   async incrementWithTtl(key: string, seconds: number): Promise<number> {
-    const results = await this.client
-      .multi()
-      .incr(key)
-      .expire(key, seconds, 'NX')
-      .exec();
+    const results = await this.client.multi().incr(key).expire(key, seconds, 'NX').exec();
 
     if (!results || results.length === 0) return 0;
     return results[0][1] as number;

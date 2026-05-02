@@ -24,6 +24,14 @@ interface JwtPayload {
   role: string;
 }
 
+interface SocketData {
+  userId: string;
+  email: string;
+  role: string;
+}
+
+type TypedSocket = Omit<Socket, 'data'> & { data: SocketData };
+
 @UseFilters(new WsExceptionFilter())
 @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }))
 @WebSocketGateway({ namespace: '/chat', cors: { origin: '*' } })
@@ -45,23 +53,25 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         const token = this.extractToken(client);
         if (!token) {
           this.logger.warn(`Connection rejected: no token provided. Socket: ${client.id}`);
-          return next(new Error('Unauthorized: no token provided'));
+          next(new Error('Unauthorized: no token provided'));
+          return;
         }
 
         const secret = this.configService.get<string>('JWT_SECRET');
         if (!secret) {
           this.logger.error('JWT_SECRET not configured');
-          return next(new Error('Internal server error'));
+          next(new Error('Internal server error'));
+          return;
         }
         const payload = jwt.verify(token, secret) as JwtPayload;
 
-        client.data.userId = payload.sub;
-        client.data.email = payload.email;
-        client.data.role = payload.role;
+        (client as TypedSocket).data.userId = payload.sub;
+        (client as TypedSocket).data.email = payload.email;
+        (client as TypedSocket).data.role = payload.role;
 
         this.logger.log(`Client authenticated: ${client.id}, user: ${payload.sub}`);
         next();
-      } catch (err) {
+      } catch (_err) {
         this.logger.warn(`Connection rejected: invalid token. Socket: ${client.id}`);
         next(new Error('Unauthorized: invalid token'));
       }
@@ -69,11 +79,13 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   }
 
   handleConnection(client: Socket): void {
-    this.logger.log(`Client connected: ${client.id}, user: ${client.data.userId}`);
+    this.logger.log(`Client connected: ${client.id}, user: ${(client as TypedSocket).data.userId}`);
   }
 
   handleDisconnect(client: Socket): void {
-    this.logger.log(`Client disconnected: ${client.id}, user: ${client.data.userId}`);
+    this.logger.log(
+      `Client disconnected: ${client.id}, user: ${(client as TypedSocket).data.userId}`,
+    );
   }
 
   @SubscribeMessage('subscribe')
@@ -82,7 +94,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     @ConnectedSocket() client: Socket,
   ): Promise<{ success: boolean }> {
     const { sessionId } = data;
-    const userId = client.data.userId as string;
+    const userId = (client as TypedSocket).data.userId;
 
     if (!sessionId) {
       throw new WsException('sessionId is required');
@@ -90,12 +102,14 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
     const isMember = await this.chatService.validateSessionMembership(sessionId, userId);
     if (!isMember) {
-      this.logger.warn(`Unauthorized subscription attempt by user ${userId} to session ${sessionId}`);
+      this.logger.warn(
+        `Unauthorized subscription attempt by user ${userId} to session ${sessionId}`,
+      );
       throw new WsException('Unauthorized: You are not a member of this chat session');
     }
 
     this.logger.log(`User ${userId} joining room ${sessionId}`);
-    client.join(sessionId);
+    await client.join(sessionId);
     client.emit('subscribed', { sessionId });
     return { success: true };
   }
@@ -105,7 +119,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     @MessageBody() dto: CreateMessageDto,
     @ConnectedSocket() client: Socket,
   ): Promise<{ success: boolean }> {
-    const userId = client.data.userId as string;
+    const userId = (client as TypedSocket).data.userId;
     const { sessionId, content } = dto;
 
     const isMember = await this.chatService.validateSessionMembership(sessionId, userId);
@@ -148,7 +162,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     @ConnectedSocket() client: Socket,
   ): Promise<{ success: boolean }> {
     const { sessionId, lastMessageId } = data;
-    const userId = client.data.userId as string;
+    const userId = (client as TypedSocket).data.userId;
 
     if (!sessionId || !lastMessageId) {
       throw new WsException('sessionId and lastMessageId are required');
@@ -171,7 +185,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     }
 
     const authObj = client.handshake.auth as { token?: string };
-    if (authObj?.token) {
+    if (authObj.token) {
       return authObj.token;
     }
 

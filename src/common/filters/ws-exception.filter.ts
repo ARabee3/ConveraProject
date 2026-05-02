@@ -15,7 +15,10 @@ export class WsExceptionFilter extends BaseWsExceptionFilter {
       message = exception.message;
     }
 
-    this.logger.error(`WebSocket error on event "${event}": ${message}`, exception instanceof Error ? exception.stack : undefined);
+    this.logger.error(
+      `WebSocket error on event "${event}": ${message}`,
+      exception instanceof Error ? exception.stack : undefined,
+    );
 
     client.emit('exception', {
       status: 'error',

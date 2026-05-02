@@ -7,6 +7,12 @@
     "assets": [
       {
         "include": "i18n/**/*",
+        "outDir": "dist/src",
+        "watchAssets": true
+      },
+      {
+        "include": "notification/templates/**/*",
+        "outDir": "dist/src",
         "watchAssets": true
       }
     ]

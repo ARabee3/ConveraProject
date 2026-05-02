@@ -1,9 +1,8 @@
-import { ConfigModule } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import { AppModule } from '../../src/app.module';
 import { ConfigService } from '@nestjs/config';
 
-async function bootstrap() {
+async function bootstrap(): Promise<void> {
   const moduleFixture = await Test.createTestingModule({
     imports: [AppModule],
   }).compile();
@@ -12,4 +11,4 @@ async function bootstrap() {
   console.log('REDIS_URL =', config.get('REDIS_URL'));
   await app.close();
 }
-bootstrap();
+void bootstrap();
