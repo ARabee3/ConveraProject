@@ -14,6 +14,8 @@ RUN npm run build
 
 FROM node:20-alpine
 
+RUN apk add --no-cache openssl
+
 WORKDIR /usr/src/app
 
 COPY --from=builder /usr/src/app/node_modules ./node_modules
