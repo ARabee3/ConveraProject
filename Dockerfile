@@ -11,6 +11,7 @@ COPY . .
 
 RUN npx prisma generate --schema=src/prisma/schema.prisma
 RUN npm run build
+RUN ls -la dist/
 
 FROM node:20-alpine
 
