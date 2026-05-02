@@ -1,7 +1,7 @@
 import { ConfigModule } from '@nestjs/config';
 import { Module } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
-import { validateSync, IsString, IsNumber, IsEnum } from 'class-validator';
+import { validateSync, IsString, IsNumber, IsEnum, IsOptional } from 'class-validator';
 
 enum Environment {
   Development = 'development',
@@ -22,20 +22,44 @@ class EnvironmentVariables {
   @IsString()
   REDIS_URL: string;
 
+  @IsOptional()
   @IsString()
   STRIPE_SECRET_KEY: string;
 
+  @IsOptional()
   @IsString()
   STRIPE_WEBHOOK_SECRET: string;
 
+  @IsOptional()
   @IsString()
   PAYMOB_API_KEY: string;
 
+  @IsOptional()
   @IsString()
   PAYMOB_HMAC_SECRET: string;
 
   @IsNumber()
   RESERVATION_TTL_MINUTES: number;
+
+  @IsOptional()
+  @IsString()
+  CLOUDINARY_CLOUD_NAME: string;
+
+  @IsOptional()
+  @IsString()
+  CLOUDINARY_API_KEY: string;
+
+  @IsOptional()
+  @IsString()
+  CLOUDINARY_API_SECRET: string;
+
+  @IsOptional()
+  @IsString()
+  SENDGRID_API_KEY: string;
+
+  @IsOptional()
+  @IsString()
+  SMTP_FROM: string;
 }
 
 export function validate(config: Record<string, unknown>) {

@@ -393,7 +393,7 @@ export class EventsService {
       });
     }
 
-    const coverImageUrl = await this.uploadImageToS3(
+    const coverImageUrl = await this.uploadImage(
       externalEvent.coverImage,
       externalEvent.externalEventId,
       'cover',
@@ -402,7 +402,7 @@ export class EventsService {
       externalEvent.galleryImages
         .slice(0, 5)
         .map((url, index) =>
-          this.uploadImageToS3(url, externalEvent.externalEventId, `gallery-${String(index)}`),
+          this.uploadImage(url, externalEvent.externalEventId, `gallery-${String(index)}`),
         ),
     );
 
@@ -471,20 +471,16 @@ export class EventsService {
     return { isNew: true };
   }
 
-  private async uploadImageToS3(
-    imageUrl: string,
-    eventId: string,
-    imageType: string,
-  ): Promise<string> {
+  private async uploadImage(imageUrl: string, eventId: string, imageType: string): Promise<string> {
     if (!imageUrl) {
       return '';
     }
 
     try {
-      const key = `events/${eventId}/${imageType}.jpg`;
+      const key = `events/${eventId}/${imageType}`;
       return await this.storageService.uploadFromUrl(imageUrl, key);
     } catch (error) {
-      console.error(`Failed to upload image ${imageUrl} to S3:`, error);
+      console.error(`Failed to upload image ${imageUrl} to Cloudinary:`, error);
       return imageUrl;
     }
   }

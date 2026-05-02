@@ -37,13 +37,19 @@ import { ConfigService } from '@nestjs/config';
     EventEmitterModule.forRoot(),
     BullModule.forRootAsync({
       imports: [AppConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        connection: {
-          host: configService.get<string>('REDIS_HOST'),
-          port: configService.get<number>('REDIS_PORT'),
-          password: configService.get<string>('REDIS_PASSWORD'),
-        },
-      }),
+      useFactory: (configService: ConfigService) => {
+        const redisUrl = configService.get<string>('REDIS_URL');
+        if (redisUrl) {
+          return { connection: { url: redisUrl } };
+        }
+        return {
+          connection: {
+            host: configService.get<string>('REDIS_HOST'),
+            port: configService.get<number>('REDIS_PORT'),
+            password: configService.get<string>('REDIS_PASSWORD'),
+          },
+        };
+      },
       inject: [ConfigService],
     }),
     LoggerModule.forRoot({
