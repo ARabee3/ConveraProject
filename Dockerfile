@@ -11,7 +11,6 @@ COPY . .
 
 RUN npx prisma generate --schema=src/prisma/schema.prisma
 RUN npm run build
-RUN ls -la dist/
 
 FROM node:20-alpine
 
@@ -26,4 +25,4 @@ COPY --from=builder /usr/src/app/src/prisma ./src/prisma
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "npx prisma migrate deploy --schema=src/prisma/schema.prisma && node dist/main"]
+CMD ["sh", "-c", "npx prisma migrate deploy --schema=src/prisma/schema.prisma && node dist/src/main"]
