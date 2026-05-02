@@ -3,6 +3,8 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { PrismaService } from '../prisma/prisma.service';
 import { ModerationService } from './moderation.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { ChatMessageSentEvent } from './events/chat-message-sent.event';
 import { randomUUID } from 'crypto';
 
 export interface ChatMessagePayload {
@@ -21,20 +23,25 @@ export class ChatService {
     private readonly prisma: PrismaService,
     @InjectQueue('chat-persistence') private readonly chatQueue: Queue,
     private readonly moderationService: ModerationService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  async sendMessage(sessionId: string, senderId: string, content: string): Promise<ChatMessagePayload | null> {
+  async sendMessage(
+    sessionId: string,
+    senderId: string,
+    content: string,
+  ): Promise<ChatMessagePayload | null> {
     const moderationResult = this.moderationService.scan(content);
 
     // If violation is severe enough or if we want to reject entirely:
     // For this implementation, we allow redacted content but log the violation.
     // If we wanted strict rejection, we'd return null here.
     const finalContent = moderationResult.redacted;
-    
+
     // In our spec, we said "reject or redact". Let's choose to reject for US4 acceptance.
     if (moderationResult.violation) {
-        this.logger.warn(`Policy violation detected for user ${senderId}. Message rejected.`);
-        return null;
+      this.logger.warn(`Policy violation detected for user ${senderId}. Message rejected.`);
+      return null;
     }
 
     const messageId = randomUUID();
@@ -58,6 +65,23 @@ export class ChatService {
       createdAt,
     });
 
+    // Determine recipient and emit event
+    const session = await this.prisma.chatSession.findUnique({
+      where: { id: sessionId },
+      include: { property: true },
+    });
+    const recipientId =
+      session && session.property.hostId === senderId
+        ? session.customerId
+        : session?.property.hostId;
+
+    if (recipientId) {
+      this.eventEmitter.emit(
+        'chat.message.sent',
+        new ChatMessageSentEvent(sessionId, messageId, senderId, recipientId, finalContent),
+      );
+    }
+
     return payload;
   }
 
@@ -65,16 +89,18 @@ export class ChatService {
     const session = await this.prisma.chatSession.findFirst({
       where: {
         id: sessionId,
-        OR: [
-          { customerId: userId },
-          { property: { hostId: userId } },
-        ],
+        OR: [{ customerId: userId }, { property: { hostId: userId } }],
       },
     });
     return !!session;
   }
 
-  async getHistory(sessionId: string, userId: string, limit = 50, offset = 0): Promise<ChatMessagePayload[]> {
+  async getHistory(
+    sessionId: string,
+    userId: string,
+    limit = 50,
+    offset = 0,
+  ): Promise<ChatMessagePayload[]> {
     const isMember = await this.validateSessionMembership(sessionId, userId);
     if (!isMember) {
       throw new ForbiddenException('Unauthorized: You are not a member of this chat session');

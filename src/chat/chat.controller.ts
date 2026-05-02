@@ -1,6 +1,11 @@
 import { Controller, Get, Param, Query, UseGuards, Request } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { AuthGuard } from '@nestjs/passport';
+import { Request as ExpressRequest } from 'express';
+
+interface AuthenticatedRequest extends ExpressRequest {
+  user: { id: string };
+}
 
 @Controller('chat')
 export class ChatController {
@@ -10,7 +15,7 @@ export class ChatController {
   @Get(':sessionId/history')
   async getHistory(
     @Param('sessionId') sessionId: string,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
   ) {

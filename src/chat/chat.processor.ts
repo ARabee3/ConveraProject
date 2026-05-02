@@ -30,7 +30,9 @@ export class ChatProcessor extends WorkerHost {
     switch (job.name) {
       case 'save-message': {
         const data = job.data as SaveMessageJob;
-        this.logger.log(`[chat-persistence] Processing save-message job ${job.id} for message ${data.messageId}`);
+        this.logger.log(
+          `[chat-persistence] Processing save-message job ${String(job.id)} for message ${data.messageId}`,
+        );
         try {
           await this.prisma.chatMessage.create({
             data: {
@@ -52,7 +54,9 @@ export class ChatProcessor extends WorkerHost {
       }
       case 'mark-read': {
         const data = job.data as MarkReadJob;
-        this.logger.log(`[chat-persistence] Processing mark-read job ${job.id} for session ${data.sessionId}`);
+        this.logger.log(
+          `[chat-persistence] Processing mark-read job ${String(job.id)} for session ${data.sessionId}`,
+        );
         try {
           await this.prisma.chatMessage.updateMany({
             where: {
@@ -63,7 +67,9 @@ export class ChatProcessor extends WorkerHost {
             },
             data: { isRead: true },
           });
-          this.logger.log(`[chat-persistence] Marked messages as read in session ${data.sessionId}`);
+          this.logger.log(
+            `[chat-persistence] Marked messages as read in session ${data.sessionId}`,
+          );
         } catch (error) {
           this.logger.error(
             `[chat-persistence] Failed to mark messages as read in session ${data.sessionId}: ${error instanceof Error ? error.message : String(error)}`,

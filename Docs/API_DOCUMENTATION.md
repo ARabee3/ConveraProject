@@ -440,6 +440,307 @@ Endpoints for property reservations, payment processing, and transaction managem
 
 ---
 
+## 📬 Notifications (Spec 8)
+
+Endpoints for managing user notification preferences.
+
+### 1. Get Notification Preferences
+`GET /notifications/preferences`
+
+**Auth Required**: `Bearer Token` (any authenticated user)
+
+**Response** `200`:
+```json
+{
+  "preferences": [
+    { "category": "REMINDERS", "enabled": true },
+    { "category": "CHAT_ALERTS", "enabled": true }
+  ]
+}
+```
+
+**Notes**:
+- If no preference record exists for a category, defaults to `enabled: true`.
+- Only non-transactional categories (reminders, chat alerts) are exposed here.
+
+### 2. Update Notification Preference
+`PATCH /notifications/preferences`
+
+**Auth Required**: `Bearer Token` (any authenticated user)
+
+**Body**:
+```json
+{
+  "category": "REMINDERS | CHAT_ALERTS",
+  "enabled": false
+}
+```
+
+**Response** `200`:
+```json
+{
+  "category": "REMINDERS",
+  "enabled": false,
+  "updatedAt": "2026-04-30T12:00:00.000Z"
+}
+```
+
+---
+
+## 🔐 Admin Dashboard (Spec 9)
+
+All admin endpoints require `Bearer Token` with `SYSTEM_ADMIN` role.
+Base path: `/admin`
+
+### 1. List Users
+`GET /admin/users`
+
+**Auth Required**: `Bearer Token` (System Admin)
+
+**Query Parameters**:
+| Param | Type | Description |
+|-------|------|-------------|
+| `cursor` | string (UUID) | Pagination cursor from previous response |
+| `take` | number | Results per page (default: 20, max: 100) |
+| `role` | string | Filter by role: `CUSTOMER`, `HOST`, `ADMIN`, `SYSTEM_ADMIN` |
+| `status` | string | Filter by status: `active`, `suspended` |
+| `search` | string | Search by email |
+
+**Response** `200`:
+```json
+{
+  "data": [
+    {
+      "id": "UUID",
+      "email": "user@example.com",
+      "role": "CUSTOMER",
+      "isVerified": true,
+      "isActive": true,
+      "createdAt": "2026-01-01T00:00:00.000Z"
+    }
+  ],
+  "nextCursor": "UUID | null",
+  "total": 150
+}
+```
+
+### 2. Get User Detail
+`GET /admin/users/:id`
+
+**Auth Required**: `Bearer Token` (System Admin)
+
+**Response** `200`:
+```json
+{
+  "id": "UUID",
+  "email": "user@example.com",
+  "role": "CUSTOMER",
+  "isVerified": true,
+  "isActive": true,
+  "createdAt": "2026-01-01T00:00:00.000Z",
+  "bookingCount": 5,
+  "propertyCount": 0,
+  "lastLoginAt": null
+}
+```
+
+**Response** `404`:
+```json
+{ "statusCode": 404, "message": "User not found" }
+```
+
+### 3. Change User Status
+`PATCH /admin/users/:id/status`
+
+**Auth Required**: `Bearer Token` (System Admin)
+
+**Body**:
+```json
+{
+  "status": "suspended",
+  "reason": "Violation of terms of service"
+}
+```
+
+**Response** `200`:
+```json
+{
+  "id": "UUID",
+  "email": "user@example.com",
+  "isActive": false,
+  "updatedAt": "2026-04-30T12:00:00.000Z"
+}
+```
+
+**Side Effects**:
+- Logs an `ActivityLog` entry (`USER_SUSPENDED` or `USER_ACTIVATED`).
+- If suspending, sends a suspension notification email to the user.
+
+### 4. List Events
+`GET /admin/events`
+
+**Auth Required**: `Bearer Token` (System Admin)
+
+**Query Parameters**:
+| Param | Type | Description |
+|-------|------|-------------|
+| `cursor` | string (UUID) | Pagination cursor from previous response |
+| `take` | number | Results per page (default: 20, max: 100) |
+| `status` | string | Filter by status: `ACTIVE`, `CANCELLED` |
+| `search` | string | Search by title |
+
+**Response** `200`:
+```json
+{
+  "data": [
+    {
+      "id": "UUID",
+      "title": "Summer Music Festival",
+      "date": "2026-06-15T20:00:00.000Z",
+      "status": "ACTIVE",
+      "maxCapacity": 1000,
+      "remainingSpots": 500,
+      "createdAt": "2026-01-01T00:00:00.000Z"
+    }
+  ],
+  "nextCursor": "UUID | null",
+  "total": 25
+}
+```
+
+### 5. List Properties
+`GET /admin/properties`
+
+**Auth Required**: `Bearer Token` (System Admin)
+
+**Query Parameters**:
+| Param | Type | Description |
+|-------|------|-------------|
+| `cursor` | string (UUID) | Pagination cursor from previous response |
+| `take` | number | Results per page (default: 20, max: 100) |
+| `status` | string | Filter by listing status: `active`, `hidden`, `removed` |
+| `search` | string | Search by title or address |
+
+**Response** `200`:
+```json
+{
+  "data": [
+    {
+      "id": "UUID",
+      "title": "Modern Apartment",
+      "hostId": "UUID",
+      "hostEmail": "host@example.com",
+      "address": "123 Nile St, Cairo",
+      "type": "APARTMENT",
+      "isActive": true,
+      "listingStatus": "active",
+      "bookingCount": 12,
+      "createdAt": "2026-01-01T00:00:00.000Z"
+    }
+  ],
+  "nextCursor": "UUID | null",
+  "total": 80
+}
+```
+
+### 6. Change Property Status
+`PATCH /admin/properties/:id/status`
+
+**Auth Required**: `Bearer Token` (System Admin)
+
+**Body**:
+```json
+{
+  "status": "removed",
+  "reason": "Inappropriate content"
+}
+```
+
+**Response** `200`:
+```json
+{
+  "id": "UUID",
+  "title": "Modern Apartment",
+  "listingStatus": "removed",
+  "updatedAt": "2026-04-30T12:00:00.000Z"
+}
+```
+
+**Side Effects**:
+- Logs an `ActivityLog` entry (`PROPERTY_HIDDEN`, `PROPERTY_REMOVED`, or `PROPERTY_ACTIVATED`).
+- If removing, sends a listing-removed notification email to the host.
+
+### 7. Get Dashboard Metrics
+`GET /admin/metrics`
+
+**Auth Required**: `Bearer Token` (System Admin)
+
+**Response** `200`:
+```json
+{
+  "users": {
+    "total": 250,
+    "byRole": {
+      "CUSTOMER": 180,
+      "HOST": 50,
+      "ADMIN": 15,
+      "SYSTEM_ADMIN": 5
+    }
+  },
+  "properties": { "total": 80, "active": 65 },
+  "events": { "total": 25, "active": 20 },
+  "bookings": {
+    "total": 500,
+    "byStatus": {
+      "PENDING_PAYMENT": 20,
+      "CONFIRMED": 300,
+      "CANCELLED": 50,
+      "COMPLETED": 130
+    }
+  },
+  "revenue": {
+    "total": 75000.00,
+    "currency": "EGP"
+  }
+}
+```
+
+### 8. Get Activity Logs
+`GET /admin/activity-logs`
+
+**Auth Required**: `Bearer Token` (System Admin)
+
+**Query Parameters**:
+| Param | Type | Description |
+|-------|------|-------------|
+| `cursor` | string (UUID) | Pagination cursor from previous response |
+| `take` | number | Results per page (default: 20, max: 100) |
+| `actionType` | string | Filter by action type: `USER_SUSPENDED`, `USER_ACTIVATED`, `PROPERTY_HIDDEN`, `PROPERTY_REMOVED`, `PROPERTY_ACTIVATED`, `EVENT_UPDATED` |
+| `startDate` | ISO-8601 | Filter logs after this date |
+| `endDate` | ISO-8601 | Filter logs before this date |
+
+**Response** `200`:
+```json
+{
+  "data": [
+    {
+      "id": "UUID",
+      "actorId": "UUID",
+      "actorEmail": "admin@example.com",
+      "actionType": "USER_SUSPENDED",
+      "targetEntityType": "user",
+      "targetEntityId": "UUID",
+      "metadata": { "reason": "Violation of terms" },
+      "createdAt": "2026-04-30T12:00:00.000Z"
+    }
+  ],
+  "nextCursor": "UUID | null",
+  "total": 200
+}
+```
+
+---
+
 ## 💬 Real-Time Communications (Spec 7)
 
 Endpoints and WebSocket events for secure, moderated chat between Customers and Hosts.

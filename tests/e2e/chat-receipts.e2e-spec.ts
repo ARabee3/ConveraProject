@@ -6,6 +6,7 @@ import { AppModule } from '../../src/app.module';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import * as jwt from 'jsonwebtoken';
 import { randomUUID } from 'crypto';
+import { getHttpUrl } from './utils';
 
 const JWT_SECRET = 'fallback_secret';
 process.env.JWT_SECRET = JWT_SECRET;
@@ -23,7 +24,7 @@ describe('ChatGateway Read Receipts (e2e)', () => {
     app = moduleFixture.createNestApplication();
     prismaService = app.get<PrismaService>(PrismaService);
     await app.listen(0);
-    httpUrl = `http://localhost:${(app.getHttpServer().address() as { port: number }).port}`;
+    httpUrl = getHttpUrl(app);
   });
 
   afterAll(async () => {
@@ -75,12 +76,15 @@ describe('ChatGateway Read Receipts (e2e)', () => {
   }
 
   async function createClient(userId: string): Promise<Socket> {
-    const token = jwt.sign({ sub: userId, email: `${userId}@example.com`, role: 'CUSTOMER' }, JWT_SECRET);
+    const token = jwt.sign(
+      { sub: userId, email: `${userId}@example.com`, role: 'CUSTOMER' },
+      JWT_SECRET,
+    );
     const client = io(`${httpUrl}/chat`, {
       transports: ['websocket'],
       auth: { token },
     });
-    return new Promise((resolve, reject) => {
+    return new Promise<Socket>((resolve, reject) => {
       const timeout = setTimeout(() => {
         client.disconnect();
         reject(new Error(`Client ${userId} connection timeout`));
@@ -109,19 +113,23 @@ describe('ChatGateway Read Receipts (e2e)', () => {
     const receiver = await createClient(host.id);
 
     await new Promise<void>((resolve) => {
-      sender.emit('subscribe', { sessionId: session.id }, () => resolve());
+      sender.emit('subscribe', { sessionId: session.id }, () => {
+        resolve();
+      });
     });
     await new Promise<void>((resolve) => {
-      receiver.emit('subscribe', { sessionId: session.id }, () => resolve());
+      receiver.emit('subscribe', { sessionId: session.id }, () => {
+        resolve();
+      });
     });
 
     // Create a message first
     const message = await prismaService.chatMessage.create({
-        data: {
-            sessionId: session.id,
-            senderId: customer.id,
-            content: 'Initial message',
-        }
+      data: {
+        sessionId: session.id,
+        senderId: customer.id,
+        content: 'Initial message',
+      },
     });
 
     const receivedReceipts: Array<Record<string, unknown>> = [];
@@ -130,10 +138,12 @@ describe('ChatGateway Read Receipts (e2e)', () => {
     });
 
     await new Promise<void>((resolve) => {
-      receiver.emit('mark_as_read', { sessionId: session.id, lastMessageId: message.id }, () => resolve());
+      receiver.emit('mark_as_read', { sessionId: session.id, lastMessageId: message.id }, () => {
+        resolve();
+      });
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await new Promise<void>((resolve) => setTimeout(resolve, 500));
 
     expect(receivedReceipts.length).toBe(1);
     expect(receivedReceipts[0].sessionId).toBe(session.id);

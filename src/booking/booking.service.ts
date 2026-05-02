@@ -11,6 +11,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { BookingCreatedEvent } from './events/booking-created.event';
 import { BookingConfirmedEvent } from './events/booking-confirmed.event';
 import { BookingCancelledEvent } from './events/booking-cancelled.event';
+import { BookingModifiedEvent } from './events/booking-modified.event';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { ConfigService } from '@nestjs/config';
@@ -204,6 +205,39 @@ export class BookingService {
     this.eventEmitter.emit('booking.cancelled', new BookingCancelledEvent(bookingId, reason));
 
     return this.prisma.booking.findUnique({ where: { id: bookingId } });
+  }
+
+  async modify(bookingId: string, startDate: string, endDate: string, totalPrice: number) {
+    const booking = await this.prisma.booking.findUnique({
+      where: { id: bookingId },
+    });
+
+    if (!booking) {
+      throw new NotFoundException('Booking not found.');
+    }
+
+    const updated = await this.prisma.booking.update({
+      where: { id: bookingId },
+      data: {
+        startDate: new Date(startDate),
+        endDate: new Date(endDate),
+        totalPrice,
+      },
+    });
+
+    this.eventEmitter.emit(
+      'booking.modified',
+      new BookingModifiedEvent(
+        updated.id,
+        updated.propertyId,
+        updated.customerId,
+        updated.startDate,
+        updated.endDate,
+        Number(updated.totalPrice),
+      ),
+    );
+
+    return updated;
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────

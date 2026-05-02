@@ -1,13 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import io from 'socket.io-client';
-import type { Socket } from 'socket.io-client';
 import { AppModule } from '../../src/app.module';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 import * as jwt from 'jsonwebtoken';
 import { randomUUID } from 'crypto';
+import { getHttpUrl } from './utils';
 
 const JWT_SECRET = 'fallback_secret';
 process.env.JWT_SECRET = JWT_SECRET;
@@ -31,7 +31,7 @@ describe('ChatGateway Auth (e2e)', () => {
     redis = new Redis(redisUrl || 'redis://localhost:6379');
 
     await app.listen(0);
-    httpUrl = `http://localhost:${(app.getHttpServer().address() as { port: number }).port}`;
+    httpUrl = getHttpUrl(app);
   });
 
   afterAll(async () => {
@@ -49,7 +49,7 @@ describe('ChatGateway Auth (e2e)', () => {
   it('should reject connection without JWT', (done) => {
     const client = io(`${httpUrl}/chat`, { transports: ['websocket'] });
 
-    client.on('connect_error', (err) => {
+    client.on('connect_error', (err: Error) => {
       expect(err.message).toBe('Unauthorized: no token provided');
       client.disconnect();
       done();
@@ -62,7 +62,7 @@ describe('ChatGateway Auth (e2e)', () => {
       auth: { token: 'invalid-token' },
     });
 
-    client.on('connect_error', (err) => {
+    client.on('connect_error', (err: Error) => {
       expect(err.message).toBe('Unauthorized: invalid token');
       client.disconnect();
       done();
@@ -71,12 +71,12 @@ describe('ChatGateway Auth (e2e)', () => {
 
   it('should accept connection with valid JWT', async () => {
     const user = await prismaService.user.create({
-        data: {
-            email: `test-${randomUUID()}@example.com`,
-            passwordHash: 'hash',
-            role: 'CUSTOMER',
-            isVerified: true,
-        }
+      data: {
+        email: `test-${randomUUID()}@example.com`,
+        passwordHash: 'hash',
+        role: 'CUSTOMER',
+        isVerified: true,
+      },
     });
 
     const token = jwt.sign({ sub: user.id, email: user.email, role: user.role }, JWT_SECRET);
@@ -97,7 +97,7 @@ describe('ChatGateway Auth (e2e)', () => {
         resolve();
       });
 
-      client.on('connect_error', (err) => {
+      client.on('connect_error', (err: Error) => {
         clearTimeout(timeout);
         client.disconnect();
         reject(err);
