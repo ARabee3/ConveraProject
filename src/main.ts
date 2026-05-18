@@ -37,6 +37,8 @@ async function bootstrap() {
   await redisIoAdapter.connectToRedis();
   app.useWebSocketAdapter(redisIoAdapter);
 
+  app.enableCors();
+
   const port = configService.get<number>('PORT') ?? 3000;
 
   await app.listen(port);
