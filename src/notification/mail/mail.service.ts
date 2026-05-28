@@ -1,26 +1,18 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as nodemailer from 'nodemailer';
-import { Transporter } from 'nodemailer';
 
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
-  private transporter: Transporter;
+  private readonly apiKey: string;
 
   constructor(private readonly configService: ConfigService) {
-    this.transporter = nodemailer.createTransport({
-      host: this.configService.get<string>('SMTP_HOST'),
-      port: this.configService.get<number>('SMTP_PORT') || 2525,
-      secure: (this.configService.get<number>('SMTP_PORT') || 2525) === 465,
-      auth: {
-        user: this.configService.get<string>('SMTP_USER'),
-        pass: this.configService.get<string>('SMTP_PASS'),
-      },
-    });
-    this.logger.log(
-      `SMTP transport configured (${this.configService.get<string>('SMTP_HOST') ?? 'unknown'})`,
-    );
+    this.apiKey = this.configService.get<string>('BREVO_API_KEY') ?? '';
+    if (!this.apiKey) {
+      this.logger.warn('BREVO_API_KEY not set, emails will not be sent');
+    } else {
+      this.logger.log('Brevo API configured');
+    }
   }
 
   async sendMail(
@@ -30,7 +22,25 @@ export class MailService {
   ): Promise<{ success: boolean; error?: string }> {
     try {
       const from = this.configService.get<string>('SMTP_FROM') || 'noreply@example.com';
-      await this.transporter.sendMail({ from, to, subject, html });
+      const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+          'api-key': this.apiKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sender: { email: from },
+          to: [{ email: to }],
+          subject,
+          htmlContent: html,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.text();
+        throw new Error(`Brevo API error ${String(response.status)}: ${errorBody}`);
+      }
+
       this.logger.log({ message: 'Email sent', to, subject });
       return { success: true };
     } catch (error) {
