@@ -55,10 +55,6 @@ class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
-  SENDGRID_API_KEY: string;
-
-  @IsOptional()
-  @IsString()
   SMTP_HOST: string;
 
   @IsOptional()
