@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `properties` ADD COLUMN `listingStatus` ENUM('ACTIVE', 'HIDDEN', 'REMOVED') NOT NULL DEFAULT 'ACTIVE';
