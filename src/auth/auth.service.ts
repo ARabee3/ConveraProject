@@ -3,6 +3,7 @@ import {
   UnauthorizedException,
   BadRequestException,
   ConflictException,
+  InternalServerErrorException,
   OnModuleDestroy,
 } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
@@ -18,6 +19,7 @@ import { LoginDto } from './dto/login.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { RefreshDto } from './dto/refresh.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { MailService } from '../notification/mail/mail.service';
 
 @Injectable()
 export class AuthService implements OnModuleDestroy {
@@ -28,6 +30,7 @@ export class AuthService implements OnModuleDestroy {
     private jwtService: JwtService,
     private configService: ConfigService,
     private prisma: PrismaService,
+    private mailService: MailService,
   ) {
     const redisUrl = this.configService.get<string>('REDIS_URL');
     console.log('REDIS_URL in AuthService:', redisUrl);
@@ -57,7 +60,16 @@ export class AuthService implements OnModuleDestroy {
     const key = `otp:verify:${email}`;
     await this.redis.set(key, JSON.stringify({ code: otp, attempts: 0 }), 'EX', 15 * 60);
 
-    console.log(`Mock Email: OTP for ${email} is ${otp}`);
+    const result = await this.mailService.sendMail(
+      email,
+      'Verify your Convera account',
+      `<h1>Welcome to Convera!</h1><p>Your verification code is:</p><h2>${otp}</h2><p>This code expires in 15 minutes.</p>`,
+    );
+    if (!result.success) {
+      throw new InternalServerErrorException(
+        'Failed to send verification email. Please try again.',
+      );
+    }
 
     return { message: 'User registered successfully. Please verify your email.' };
   }
@@ -178,7 +190,13 @@ export class AuthService implements OnModuleDestroy {
       const key = `otp:reset:${email}`;
       await this.redis.set(key, JSON.stringify({ code: otp, attempts: 0 }), 'EX', 15 * 60);
 
-      console.log(`Mock Email: Reset OTP for ${email} is ${otp}`);
+      this.mailService
+        .sendMail(
+          email,
+          'Reset your Convera password',
+          `<h1>Password Reset</h1><p>Your reset code is:</p><h2>${otp}</h2><p>This code expires in 15 minutes.</p><p>If you didn't request this, you can safely ignore this email.</p>`,
+        )
+        .catch(() => {});
     }
 
     return { message: 'If an account exists, a reset code has been sent to your email.' };
