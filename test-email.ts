@@ -1,43 +1,40 @@
-import * as nodemailer from 'nodemailer';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
 
 async function main() {
-  const host = process.env.SMTP_HOST;
-  const port = Number(process.env.SMTP_PORT) || 2525;
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
+  const apiKey = process.env.BREVO_API_KEY;
   const from = process.env.SMTP_FROM || 'noreply@example.com';
 
-  if (!host || !user || !pass) {
-    console.error('Missing SMTP credentials. Set SMTP_HOST, SMTP_USER, SMTP_PASS in .env');
+  if (!apiKey) {
+    console.error('Missing BREVO_API_KEY in .env');
     process.exit(1);
   }
 
-  console.log(`Connecting to ${host}:${port} as ${user}...`);
+  console.log(`Sending via Brevo API from ${from}...`);
 
-  const transporter = nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
-    auth: { user, pass },
+  const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: {
+      'api-key': apiKey,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      sender: { email: from },
+      to: [{ email: 'arabeea7104@gmail.com' }],
+      subject: 'Convera Email Test',
+      htmlContent: '<h1>Hello from Convera!</h1><p>If you see this, Brevo email delivery is working.</p>',
+    }),
   });
 
-  const info = await transporter.sendMail({
-    from: `"Convera Test" <${from}>`,
-    to: 'test@example.com',
-    subject: 'Convera Email Test',
-    html: '<h1>Hello from Convera!</h1><p>If you see this, email delivery is working.</p>',
-  });
-
-  console.log('Message sent:', info.messageId);
-
-  const previewUrl = nodemailer.getTestMessageUrl(info);
-  if (previewUrl) {
-    console.log('Preview URL:', previewUrl);
+  if (!response.ok) {
+    const errorBody = await response.text();
+    console.error(`Brevo API error ${response.status}: ${errorBody}`);
+    process.exit(1);
   }
 
+  const data = await response.json();
+  console.log('Message sent:', data.messageId);
   console.log('Email sent successfully!');
 }
 
