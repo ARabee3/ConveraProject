@@ -1,5 +1,6 @@
 import {
   Controller,
+  Get,
   Post,
   Body,
   UseGuards,
@@ -20,6 +21,13 @@ interface AuthRequest extends Request {
 @Controller('bookings')
 export class BookingController {
   constructor(private readonly bookingService: BookingService) {}
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  @HttpCode(HttpStatus.OK)
+  async findMyBookings(@Request() req: AuthRequest) {
+    return this.bookingService.findByCustomer(req.user.id);
+  }
 
   @UseGuards(JwtAuthGuard)
   @Post()
