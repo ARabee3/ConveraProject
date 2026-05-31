@@ -16,6 +16,7 @@ import { PaymentModule } from './payment/payment.module';
 import { ChatModule } from './chat/chat.module';
 import { NotificationModule } from './notification/notification.module';
 import { AdminModule } from './admin/admin.module';
+import { UploadModule } from './upload/upload.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { BullModule } from '@nestjs/bullmq';
 import { ConfigService } from '@nestjs/config';
@@ -34,6 +35,7 @@ import { ConfigService } from '@nestjs/config';
     ChatModule,
     NotificationModule,
     AdminModule,
+    UploadModule,
     EventEmitterModule.forRoot(),
     BullModule.forRootAsync({
       imports: [AppConfigModule],
