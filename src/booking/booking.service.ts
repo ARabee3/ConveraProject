@@ -207,6 +207,35 @@ export class BookingService {
     return this.prisma.booking.findUnique({ where: { id: bookingId } });
   }
 
+  // ─── US3: List My Bookings ────────────────────────────────────────────────
+
+  async findByCustomer(customerId: string) {
+    return this.prisma.booking.findMany({
+      where: { customerId },
+      include: {
+        property: {
+          select: {
+            id: true,
+            title: true,
+            address: true,
+            imageUrls: true,
+            basePrice: true,
+          },
+        },
+        transactions: {
+          select: {
+            id: true,
+            provider: true,
+            status: true,
+            createdAt: true,
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async modify(bookingId: string, startDate: string, endDate: string, totalPrice: number) {
     const booking = await this.prisma.booking.findUnique({
       where: { id: bookingId },
