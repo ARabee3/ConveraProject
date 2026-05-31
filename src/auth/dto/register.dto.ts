@@ -1,4 +1,5 @@
-import { IsEmail, IsString, Matches, MinLength } from 'class-validator';
+import { IsEmail, IsString, Matches, MinLength, IsEnum, IsOptional } from 'class-validator';
+import { Role } from '@prisma/client';
 
 export class RegisterDto {
   @IsEmail({}, { message: 'email must be an email' })
@@ -10,4 +11,8 @@ export class RegisterDto {
     message: 'password too weak (must contain uppercase, lowercase, number and special character)',
   })
   password!: string;
+
+  @IsOptional()
+  @IsEnum(Role, { message: 'role must be CUSTOMER or HOST' })
+  role?: Role = Role.CUSTOMER;
 }

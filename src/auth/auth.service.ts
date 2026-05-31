@@ -42,7 +42,7 @@ export class AuthService implements OnModuleDestroy {
   }
 
   async register(registerDto: RegisterDto) {
-    const { email, password } = registerDto;
+    const { email, password, role } = registerDto;
     const existingUser = await this.usersService.user({ email });
     if (existingUser) {
       throw new ConflictException('Email already registered');
@@ -54,6 +54,7 @@ export class AuthService implements OnModuleDestroy {
     await this.usersService.createUser({
       email,
       passwordHash,
+      role,
     });
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
