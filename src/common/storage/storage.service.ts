@@ -19,4 +19,18 @@ export class StorageService {
     });
     return result.secure_url;
   }
+
+  async uploadFile(fileBuffer: Buffer, key: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        { public_id: key, resource_type: 'image' },
+        (error, result) => {
+          if (error) return reject(error);
+          if (!result) return reject(new Error('Upload failed'));
+          resolve(result.secure_url);
+        },
+      );
+      uploadStream.end(fileBuffer);
+    });
+  }
 }
