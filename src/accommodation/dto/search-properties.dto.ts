@@ -1,7 +1,11 @@
-import { IsOptional, IsNumber, Min, Max, IsDateString } from 'class-validator';
+import { IsOptional, IsNumber, Min, Max, IsDateString, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class SearchPropertiesDto {
+  @IsOptional()
+  @IsString()
+  search?: string;
+
   @IsOptional()
   @IsNumber()
   @Type(() => Number)
@@ -46,3 +50,4 @@ export class SearchPropertiesDto {
   @Type(() => Number)
   ratingMin?: number;
 }
+

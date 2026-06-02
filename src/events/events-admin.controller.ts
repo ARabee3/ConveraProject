@@ -44,4 +44,16 @@ export class EventsAdminController {
       ...result,
     };
   }
+
+  @Post('categories')
+  @Roles('ADMIN', 'SYSTEM_ADMIN')
+  async createCategory(@Body() dto: { name: string; description: string }) {
+    return this.eventsService.createCategory(dto.name, dto.description);
+  }
+
+  @Delete('categories/:id')
+  @Roles('ADMIN', 'SYSTEM_ADMIN')
+  async deleteCategory(@Param('id') id: string) {
+    return this.eventsService.deleteCategory(id);
+  }
 }

@@ -18,9 +18,16 @@ export class AccommodationService {
   // ─── US1: Search / Browse ────────────────────────────────────────────────
 
   async searchProperties(filters: SearchPropertiesDto) {
-    const { lat, lng, radius, priceMin, priceMax, checkIn, checkOut, ratingMin } = filters;
+    const { search, lat, lng, radius, priceMin, priceMax, checkIn, checkOut, ratingMin } = filters;
 
     const where: Prisma.PropertyWhereInput = { isActive: true };
+
+    if (search) {
+      where.OR = [
+        { title: { contains: search } },
+        { address: { contains: search } },
+      ];
+    }
 
     if (priceMin !== undefined || priceMax !== undefined) {
       where.basePrice = {
@@ -44,6 +51,7 @@ export class AccommodationService {
       where,
       select: {
         id: true,
+        hostId: true,
         title: true,
         type: true,
         address: true,
@@ -51,6 +59,7 @@ export class AccommodationService {
         longitude: true,
         basePrice: true,
         imageUrls: true,
+        isActive: true,
         reviews: {
           select: { rating: true },
         },
@@ -72,6 +81,7 @@ export class AccommodationService {
 
         return {
           id: p.id,
+          hostId: p.hostId,
           title: p.title,
           type: p.type,
           address: p.address,
@@ -79,6 +89,7 @@ export class AccommodationService {
           longitude: p.longitude,
           basePrice: p.basePrice,
           imageUrls: p.imageUrls,
+          isActive: p.isActive,
           avgRating,
           distanceKm,
         };
@@ -129,6 +140,19 @@ export class AccommodationService {
       where: { id: propertyId },
       data: { isActive: false },
     });
+  }
+
+  async toggleActive(propertyId: string, hostId: string) {
+    const property = await this.findPropertyOrThrow(propertyId);
+    this.assertHost(property, hostId);
+
+    const updated = await this.prisma.property.update({
+      where: { id: propertyId },
+      data: { isActive: !property.isActive },
+      select: { id: true, isActive: true },
+    });
+
+    return updated;
   }
 
   async setAvailability(propertyId: string, hostId: string, dto: UpdateAvailabilityDto) {
@@ -188,6 +212,15 @@ export class AccommodationService {
         },
         availabilityOverrides: {
           orderBy: { startDate: 'asc' },
+        },
+        bookings: {
+          where: {
+            status: { in: ['PENDING_PAYMENT', 'CONFIRMED'] },
+          },
+          select: {
+            startDate: true,
+            endDate: true,
+          },
         },
       },
     });

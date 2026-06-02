@@ -8,31 +8,35 @@ export interface ModerationResult {
 
 @Injectable()
 export class ModerationService {
-  private readonly emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
-  private readonly phoneRegex = /(?:\+?\d{1,3}[-.\s]?)?\(?\d{1,4}\)?[-.\s]?\d{1,4}[-.\s]?\d{1,9}/g;
-  private readonly urlRegex = /(?:https?:\/\/)?(?:www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?/g;
+  // Create fresh regex instances per scan to avoid /g flag state mutation issues
+  private emailRegex() { return /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/; }
+  private phoneRegex() { return /(?:\+?\d{1,3}[-.\s]?)?\(?\d{3,}\)?[-.\s]?\d{3,}[-.\s]?\d{4,}/; }
+  private urlRegex() { return /https?:\/\/[^\s]+/; }
 
   scan(content: string): ModerationResult {
     let redacted = content;
     let violation = false;
     let violationType: string | undefined;
 
-    if (this.emailRegex.test(content)) {
+    // Only detect explicit full emails: user@domain.tld
+    if (this.emailRegex().test(content)) {
       violation = true;
       violationType = 'EMAIL';
-      redacted = redacted.replace(this.emailRegex, '[REDACTED-EMAIL]');
+      redacted = redacted.replace(this.emailRegex(), '[REDACTED-EMAIL]');
     }
 
-    if (this.phoneRegex.test(content)) {
+    // Only detect explicit phone patterns with 10+ digits
+    if (this.phoneRegex().test(content)) {
       violation = true;
       violationType = violationType ? `${violationType},PHONE` : 'PHONE';
-      redacted = redacted.replace(this.phoneRegex, '[REDACTED-PHONE]');
+      redacted = redacted.replace(this.phoneRegex(), '[REDACTED-PHONE]');
     }
 
-    if (this.urlRegex.test(content)) {
+    // Only detect explicit http/https URLs
+    if (this.urlRegex().test(content)) {
       violation = true;
       violationType = violationType ? `${violationType},URL` : 'URL';
-      redacted = redacted.replace(this.urlRegex, '[REDACTED-URL]');
+      redacted = redacted.replace(this.urlRegex(), '[REDACTED-URL]');
     }
 
     return { violation, violationType, redacted };

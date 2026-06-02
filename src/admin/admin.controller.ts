@@ -3,7 +3,6 @@ import { Request as ExpressRequest } from 'express';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
-import { Role } from '@prisma/client';
 import { AdminService } from './admin.service';
 import { AdminMetricsService } from './admin-metrics.service';
 import { ActivityLogService } from './activity-log.service';
@@ -16,7 +15,7 @@ import { ActivityLogQueryDto } from './dto/activity-log-query.dto';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(Role.SYSTEM_ADMIN)
+@Roles('ADMIN', 'SYSTEM_ADMIN')
 export class AdminController {
   constructor(
     private readonly adminService: AdminService,
