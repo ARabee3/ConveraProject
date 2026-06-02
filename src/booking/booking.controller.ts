@@ -8,6 +8,7 @@ import {
   HttpCode,
   HttpStatus,
   ConflictException,
+  Param,
 } from '@nestjs/common';
 import { BookingService } from './booking.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
@@ -27,6 +28,13 @@ export class BookingController {
   @HttpCode(HttpStatus.OK)
   async findMyBookings(@Request() req: AuthRequest) {
     return this.bookingService.findByCustomer(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get(':id')
+  @HttpCode(HttpStatus.OK)
+  async findOne(@Request() req: AuthRequest, @Param('id') id: string) {
+    return this.bookingService.findOne(id, req.user.id);
   }
 
   @UseGuards(JwtAuthGuard)

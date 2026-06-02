@@ -22,7 +22,20 @@ export class ReviewsService {
     });
     if (!property) throw new NotFoundException('Property not found.');
 
-    // 2. Guard against duplicate review for the same booking
+    // 2. Verify booking exists and belongs to the user
+    const booking = await this.prisma.booking.findFirst({
+      where: {
+        id: dto.bookingId,
+        customerId: userId,
+        propertyId: propertyId,
+      },
+    });
+
+    if (!booking) {
+      throw new NotFoundException('Booking not found or does not belong to you.');
+    }
+
+    // 3. Guard against duplicate review for the same booking
     const existing = await this.prisma.review.findUnique({
       where: { bookingId: dto.bookingId },
     });
@@ -30,7 +43,7 @@ export class ReviewsService {
       throw new ConflictException('A review for this booking already exists.');
     }
 
-    // 3. Create the review
+    // 4. Create the review
     return this.prisma.review.create({
       data: {
         propertyId,

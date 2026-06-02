@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RedisService } from '../common/redis/redis.service';
 import { StorageService } from '../common/storage/storage.service';
@@ -483,5 +483,72 @@ export class EventsService {
       console.error(`Failed to upload image ${imageUrl} to Cloudinary:`, error);
       return imageUrl;
     }
+  }
+
+  async registerForEvent(eventId: string, userId: string) {
+    const event = await this.prisma.event.findUnique({
+      where: { id: eventId },
+    });
+
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+
+    if (event.status === 'CANCELLED') {
+      throw new BadRequestException('This event is cancelled');
+    }
+
+    if (event.remainingSpots <= 0) {
+      throw new ConflictException('This event is sold out');
+    }
+
+    const existing = await this.prisma.eventRegistration.findFirst({
+      where: { eventId, userId, status: 'CONFIRMED' },
+    });
+
+    if (existing) {
+      throw new ConflictException('You are already registered for this event');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const updatedEvent = await tx.event.update({
+        where: { id: eventId },
+        data: {
+          remainingSpots: {
+            decrement: 1,
+          },
+        },
+      });
+
+      if (updatedEvent.remainingSpots < 0) {
+        throw new ConflictException('This event is sold out');
+      }
+
+      return tx.eventRegistration.create({
+        data: {
+          eventId,
+          userId,
+          status: 'CONFIRMED',
+        },
+      });
+    });
+  }
+
+  async getCategories() {
+    return this.prisma.eventCategory.findMany({
+      orderBy: { name: 'asc' },
+    });
+  }
+
+  async createCategory(name: string, description: string) {
+    return this.prisma.eventCategory.create({
+      data: { name, description },
+    });
+  }
+
+  async deleteCategory(id: string) {
+    return this.prisma.eventCategory.delete({
+      where: { id },
+    });
   }
 }

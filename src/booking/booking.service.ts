@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ConflictException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { BookingStatus } from '@prisma/client';
@@ -24,6 +25,7 @@ export class BookingService {
     private readonly configService: ConfigService,
     @InjectQueue('booking-expiration') private readonly expirationQueue: Queue,
   ) {}
+
 
   // ─── US1: Create Booking ──────────────────────────────────────────────────
 
@@ -234,6 +236,33 @@ export class BookingService {
       },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  async findOne(bookingId: string, customerId: string) {
+    const booking = await this.prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: {
+        property: {
+          select: {
+            id: true,
+            title: true,
+            address: true,
+            imageUrls: true,
+            basePrice: true,
+          },
+        },
+      },
+    });
+
+    if (!booking) {
+      throw new NotFoundException('Booking not found.');
+    }
+
+    if (booking.customerId !== customerId) {
+      throw new ForbiddenException('You do not have permission to view this booking.');
+    }
+
+    return booking;
   }
 
   async modify(bookingId: string, startDate: string, endDate: string, totalPrice: number) {

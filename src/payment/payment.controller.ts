@@ -1,8 +1,9 @@
-import { Controller, Post, Body, Headers, Req, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, Headers, Req, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import { BookingService } from '../booking/booking.service';
 import { PaymentProvider } from '@prisma/client';
 import * as express from 'express';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 
 @Controller('payments')
 export class PaymentController {
@@ -11,6 +12,7 @@ export class PaymentController {
     private readonly bookingService: BookingService,
   ) {}
 
+  @UseGuards(JwtAuthGuard)
   @Post('initialize')
   @HttpCode(HttpStatus.OK)
   async initializePayment(
@@ -66,5 +68,13 @@ export class PaymentController {
     }
 
     return { received: true };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('confirm-mock')
+  @HttpCode(HttpStatus.OK)
+  async confirmMockPayment(@Body('bookingId') bookingId: string) {
+    await this.bookingService.confirm(bookingId);
+    return { status: 'CONFIRMED', bookingId };
   }
 }
