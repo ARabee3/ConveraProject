@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Param, Query, Body, UseGuards, Request, HttpCode, HttpStatus } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { AuthGuard } from '@nestjs/passport';
 import { Request as ExpressRequest } from 'express';
@@ -27,5 +27,21 @@ export class ChatController {
       offset ? parseInt(offset, 10) : 0,
     );
     return { data: messages };
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post('sessions')
+  @HttpCode(HttpStatus.CREATED)
+  async createSession(
+    @Request() req: AuthenticatedRequest,
+    @Body('propertyId') propertyId: string,
+  ) {
+    return this.chatService.createSession(propertyId, req.user.id);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('sessions')
+  async listSessions(@Request() req: AuthenticatedRequest) {
+    return this.chatService.listUserSessions(req.user.id);
   }
 }

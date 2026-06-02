@@ -93,4 +93,11 @@ export class HostAccommodationController {
   ) {
     return this.accommodationService.setAvailability(id, req.user.id, dto);
   }
+
+  /** US2 — Toggle property active status */
+  @Post(':id/toggle-active')
+  @HttpCode(HttpStatus.OK)
+  toggleActive(@Request() req: AuthRequest, @Param('id') id: string) {
+    return this.accommodationService.toggleActive(id, req.user.id);
+  }
 }

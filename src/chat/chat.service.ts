@@ -100,11 +100,22 @@ export class ChatService {
     userId: string,
     limit = 50,
     offset = 0,
-  ): Promise<ChatMessagePayload[]> {
-    const isMember = await this.validateSessionMembership(sessionId, userId);
+  ): Promise<(ChatMessagePayload & { isHostSender?: boolean })[]> {
+    const session = await this.prisma.chatSession.findUnique({
+      where: { id: sessionId },
+      include: { property: { select: { hostId: true } } },
+    });
+
+    if (!session) {
+      throw new ForbiddenException('Chat session not found');
+    }
+
+    const isMember = session.customerId === userId || session.property.hostId === userId;
     if (!isMember) {
       throw new ForbiddenException('Unauthorized: You are not a member of this chat session');
     }
+
+    const hostId = session.property.hostId;
 
     const messages = await this.prisma.chatMessage.findMany({
       where: { sessionId },
@@ -119,6 +130,59 @@ export class ChatService {
       senderId: msg.senderId,
       content: msg.content,
       createdAt: msg.createdAt.toISOString(),
+      isHostSender: msg.senderId === hostId,
+    }));
+  }
+
+  async createSession(propertyId: string, customerId: string) {
+    const property = await this.prisma.property.findUnique({
+      where: { id: propertyId },
+    });
+
+    if (!property) {
+      throw new ForbiddenException('Property not found.');
+    }
+
+    if (property.hostId === customerId) {
+      throw new ForbiddenException('You cannot chat with yourself.');
+    }
+
+    const existing = await this.prisma.chatSession.findFirst({
+      where: { propertyId, customerId, bookingId: null },
+    });
+
+    if (existing) {
+      return { sessionId: existing.id };
+    }
+
+    const session = await this.prisma.chatSession.create({
+      data: { propertyId, customerId },
+    });
+
+    return { sessionId: session.id };
+  }
+
+  async listUserSessions(userId: string) {
+    const sessions = await this.prisma.chatSession.findMany({
+      where: {
+        OR: [{ customerId: userId }, { property: { hostId: userId } }],
+      },
+      include: {
+        property: { select: { id: true, title: true, address: true, hostId: true } },
+        messages: { orderBy: { createdAt: 'desc' }, take: 1 },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return sessions.map((s) => ({
+      sessionId: s.id,
+      propertyTitle: s.property.title,
+      propertyAddress: s.property.address,
+      lastMessage: s.messages[0]?.content || null,
+      lastMessageAt: s.messages[0]?.createdAt || s.createdAt,
+      lastMessageSenderId: s.messages[0]?.senderId || null,
+      isHost: s.property.hostId === userId,
+      hasUnread: s.messages[0] ? s.messages[0].senderId !== userId : false,
     }));
   }
 
